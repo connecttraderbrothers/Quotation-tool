@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trader Brothers LTD - Quotation Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #1a1a1a;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 40px;
+        }
+
+        .header {
+            border-bottom: 3px solid #fbbf24;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .header p {
+            color: #9ca3af;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            padding: 10px 12px;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #262626;
+            color: #ffffff;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+
+        .add-item-section {
+            background: #262626;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #fbbf24;
+        }
+
+        .recommendation-box {
+            background: #262626;
+            border-left: 4px solid #fbbf24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .recommendation-box p {
+            margin: 5px 0;
+            color: #e5e7eb;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .recommendation-text {
+            font-size: 14px;
+            color: #d1d5db;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #f59e0b;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #d97706;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 18px;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #374151;
+            color: #e5e7eb;
+        }
+
+        th {
+            background: #262626;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background: #2d2d2d;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total-row {
+            background: #2d2d2d;
+            font-weight: bold;
+        }
+
+        .total-row td {
+            font-size: 18px;
+        }
+
+        .btn-delete {
+            background: #dc2626;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-delete:hover {
+            background: #b91c1c;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TR<span style="color: #fbbf24;">A</span>DER BROTHERS LTD</h1>
+            <p>Professional Quotation Tool</p>
+        </div>
+
+        <div class="section">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Client Name</label>
+                    <input type="text" id="clientName" placeholder="Enter client name">
+                </div>
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="projectName" placeholder="Enter project name">
+                </div>
+                <div class="form-group">
+                    <label>Project Address</label>
+                    <input type="text" id="projectAddress" placeholder="Enter address">
+                </div>
+            </div>
+        </div>
+
+        <div class="add-item-section">
+            <h2 class="section-title">Add Line Item</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="">Select category...</option>
+                        <option value="General Labour">General Labour</option>
+                        <option value="Skilled Carpenter">Skilled Carpenter</option>
+                        <option value="Electrician">Electrician</option>
+                        <option value="Plumber">Plumber</option>
+                        <option value="Plasterer">Plasterer</option>
+                        <option value="Painter/Decorator">Painter/Decorator</option>
+                        <option value="Tiler">Tiler</option>
+                        <option value="Bricklayer">Bricklayer</option>
+                        <option value="Roofer">Roofer</option>
+                        <option value="Kitchen Installation">Kitchen Installation</option>
+                        <option value="Bathroom Installation">Bathroom Installation</option>
+                        <option value="Flooring (Hardwood)">Flooring (Hardwood)</option>
+                        <option value="Flooring (Tile)">Flooring (Tile)</option>
+                        <option value="Drywall Installation">Drywall Installation</option>
+                        <option value="Window Installation">Window Installation</option>
+                        <option value="Door Installation">Door Installation</option>
+                        <option value="Demolition Work">Demolition Work</option>
+                        <option value="Project Management">Project Management</option>
+                        <option value="Materials">Materials</option>
+                        <option value="Custom Item">Custom Item</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="description" placeholder="Describe the work">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="quantity" value="1" min="0.1" step="0.1">
+                </div>
+                <div class="form-group hidden" id="unitGroup">
+                    <label>Unit</label>
+                    <input type="text" id="unit" placeholder="e.g. sqm, hours" value="item">
+                </div>
+                <div class="form-group">
+                    <label id="rateLabel">Custom Rate (optional)</label>
+                    <input type="number" id="customRate" placeholder="Enter rate" step="0.01">
+                </div>
+            </div>
+
+            <div id="recommendationBox" class="recommendation-box hidden">
+                <p class="recommendation-title"><span id="recommendationType"></span></p>
+                <p class="recommendation-text" id="recommendationReason"></p>
+                <p class="recommendation-text" id="rateInfo"></p>
+            </div>
+
+            <button class="btn btn-primary" onclick="addItem()">Add Item to Quote</button>
+        </div>
+
+        <div class="section" id="quoteSection" style="display: none;">
+            <h2 class="section-title">Quote Items</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Total</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quoteItems"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="generateSection" style="display: none; margin-top: 30px;">
+            <button class="btn btn-success" onclick="generateQuote()">Generate and Download Quote</button>
+        </div>
+    </div>
+
+    <script>
+        var categories = {
+            'General Labour': { rate: 25, unit: 'hour', pricing: 'hourly' },
+            'Skilled Carpenter': { rate: 45, unit: 'hour', pricing: 'hourly' },
+            'Electrician': { rate: 50, unit: 'hour', pricing: 'hourly' },
+            'Plumber': { rate: 48, unit: 'hour', pricing: 'hourly' },
+            'Plasterer': { rate: 40, unit: 'hour', pricing: 'hourly' },
+            'Painter/Decorator': { rate: 35, unit: 'hour', pricing: 'hourly' },
+            'Tiler': { rate: 38, unit: 'hour', pricing: 'hourly' },
+            'Bricklayer': { rate: 42, unit: 'hour', pricing: 'hourly' },
+            'Roofer': { rate: 45, unit: 'hour', pricing: 'hourly' },
+            'Kitchen Installation': { rate: 3500, unit: 'job', pricing: 'fixed' },
+            'Bathroom Installation': { rate: 4500, unit: 'job', pricing: 'fixed' },
+            'Flooring (Hardwood)': { rate: 45, unit: 'sqm', pricing: 'fixed' },
+            'Flooring (Tile)': { rate: 35, unit: 'sqm', pricing: 'fixed' },
+            'Drywall Installation': { rate: 25, unit: 'sqm', pricing: 'fixed' },
+            'Window Installation': { rate: 450, unit: 'window', pricing: 'fixed' },
+            'Door Installation': { rate: 350, unit: 'door', pricing: 'fixed' },
+            'Demolition Work': { rate: 30, unit: 'hour', pricing: 'hourly' },
+            'Project Management': { rate: 65, unit: 'hour', pricing: 'hourly' },
+            'Materials': { rate: 0, unit: 'lump sum', pricing: 'fixed' },
+            'Custom Item': { rate: 0, unit: 'item', pricing: 'both' }
+        };
+
+        var items = [];
+
+        document.getElementById('category').addEventListener('change', function() {
+            var category = this.value;
+            var unitGroup = document.getElementById('unitGroup');
+            var recommendationBox = document.getElementById('recommendationBox');
+            var rateLabel = document.getElementById('rateLabel');
+            
+            if (category === 'Custom Item') {
+                unitGroup.classList.remove('hidden');
+                rateLabel.textContent = 'Rate (£)';
+            } else {
+                unitGroup.classList.add('hidden');
+                rateLabel.textContent = category === 'Materials' ? 'Rate (£)' : 'Custom Rate (optional)';
+            }
+
+            if (category && categories[category]) {
+                var cat = categories[category];
+                var recommendation = getPricingRecommendation(category);
+                
+                document.getElementById('recommendationType').textContent = 'Pricing Recommendation: ' + recommendation.recommendation;
+                document.getElementById('recommendationReason').textContent = recommendation.reason;
+                
+                if (cat.rate > 0) {
+                    var markedUp = (cat.rate * 1.10).toFixed(2);
+                    document.getElementById('rateInfo').textContent = 'Industry rate: £' + cat.rate + ' → With 10% markup: £' + markedUp + ' per ' + cat.unit;
+                } else {
+                    document.getElementById('rateInfo').textContent = '';
+                }
+                
+                recommendationBox.classList.remove('hidden');
+            } else {
+                recommendationBox.classList.add('hidden');
+            }
+        });
+
+        function getPricingRecommendation(category) {
+            var cat = categories[category];
+            if (!cat) return { recommendation: 'N/A', reason: '' };
+
+            if (cat.pricing === 'hourly') {
+                return {
+                    recommendation: 'Hourly Basis',
+                    reason: 'Best for tasks with variable scope, uncertain duration, or ongoing work where time investment is hard to predict upfront.'
+                };
+            } else if (cat.pricing === 'fixed') {
+                return {
+                    recommendation: 'Fixed Price',
+                    reason: 'Best for clearly defined scope with predictable materials and labor. Gives client cost certainty and reduces admin.'
+                };
+            } else {
+                return {
+                    recommendation: 'Either works',
+                    reason: 'Consider client preference and project clarity. Fixed for well-defined work, hourly for uncertain scope.'
+                };
+            }
+        }
+
+        function addItem() {
+            var category = document.getElementById('category').value;
+            var description = document.getElementById('description').value;
+            var quantity = parseFloat(document.getElementById('quantity').value);
+            var customRate = document.getElementById('customRate').value;
+
+            if (!category || !description) {
+                alert('Please select a category and enter a description');
+                return;
+            }
+
+            var baseRate = customRate ? parseFloat(customRate) : categories[category].rate;
+            var markedUpRate = baseRate * 1.10;
+            var lineTotal = markedUpRate * quantity;
+            var unit = category === 'Custom Item' ? document.getElementById('unit').value : categories[category].unit;
+
+            items.push({
+                category: category,
+                description: description,
+                quantity: quantity,
+                unit: unit,
+                baseRate: baseRate,
+                markedUpRate: markedUpRate,
+                lineTotal: lineTotal
+            });
+
+            updateQuoteTable();
+            
+            document.getElementById('description').value = '';
+            document.getElementById('quantity').value = '1';
+            document.getElementById('customRate').value = '';
+            document.getElementById('unit').value = 'item';
+            document.getElementById('category').value = '';
+            document.getElementById('recommendationBox').classList.add('hidden');
+            document.getElementById('unitGroup').classList.add('hidden');
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            updateQuoteTable();
+        }
+
+        function updateQuoteTable() {
+            var tbody = document.getElementById('quoteItems');
+            var quoteSection = document.getElementById('quoteSection');
+            var generateSection = document.getElementById('generateSection');
+
+            if (items.length === 0) {
+                quoteSection.style.display = 'none';
+                generateSection.style.display = 'none';
+                return;
+            }
+
+            quoteSection.style.display = 'block';
+            generateSection.style.display = 'block';
+
+            var html = '';
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                html += '<tr>';
+                html += '<td>' + item.category + '</td>';
+                html += '<td>' + item.description + '</td>';
+                html += '<td class="text-center">' + item.quantity + ' ' + item.unit + '</td>';
+                html += '<td class="text-right">£' + item.markedUpRate.toFixed(2) + '</td>';
+                html += '<td class="text-right" style="font-weight: 600;">£' + item.lineTotal.toFixed(2) + '</td>';
+                html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + ')">Delete</button></td>';
+                html += '</tr>';
+            }
+
+            var total = 0;
+            for (var j = 0; j < items.length; j++) {
+                total += items[j].lineTotal;
+            }
+            
+            html += '<tr class="total-row">';
+            html += '<td colspan="4" class="text-right">TOTAL:</td>';
+            html += '<td class="text-right">£' + total.toFixed(2) + '</td>';
+            html += '<td></td>';
+            html += '</tr>';
+
+            tbody.innerHTML = html;
+        }
+
+        function generateQuote() {
+            var clientName = document.getElementById('clientName').value || '[Client Name]';
+            var projectName = document.getElementById('projectName').value || '[Project Name]';
+            var projectAddress = document.getElementById('projectAddress').value || '[Project Address]';
+            
+            var today = new Date();
+            var quoteDate = today.toLocaleDateString('en-GB');
+            var expiryDate = new Date(today.getTime() + 31 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB');
+            var quoteNumber = Date.now().toString().slice(-6);
+            
+            var subtotal = 0;
+            for (var j = 0; j < items.length; j++) {
+                subtotal += items[j].lineTotal;
+            }
+            var vat = subtotal * 0.20;
+            var total = subtotal + vat;
+            
+            var { jsPDF } = window.jspdf;
+            var doc = new jsPDF();
+            
+            // Company Header
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('TRADER BROTHERS LTD', 20, 20);
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('8 Craigour Terrace', 20, 27);
+            doc.text('Edinburgh, EH17 7PB', 20, 32);
+            doc.text('07979309957', 20, 37);
+            doc.text('traderbrotherslimited@gmail.com', 20, 42);
+            
+            // Estimate For section (right side)
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('Estimate for', 120, 20);
+            doc.setFont(undefined, 'normal');
+            doc.text('Date', 120, 27);
+            doc.text(quoteDate, 155, 27);
+            
+            doc.text(clientName, 120, 34);
+            doc.text('Estimate #', 155, 34);
+            doc.text(quoteNumber, 180, 34);
+            
+            doc.text(projectName, 120, 41);
+            doc.text('Customer ID', 155, 41);
+            doc.text('CUST' + quoteNumber, 180, 41);
+            
+            doc.text(projectAddress, 120, 48);
+            doc.text('Expiry date', 155, 48);
+            doc.text(expiryDate, 180, 48);
+            
+            // Line separator
+            doc.setLineWidth(0.5);
+            doc.line(20, 55, 190, 55);
+            
+            // Table headers
+            var yPos = 65;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Description', 20, yPos);
+            doc.text('Qty', 130, yPos);
+            doc.text('Unit price', 150, yPos);
+            doc.text('Total price', 175, yPos);
+            
+            yPos += 3;
+            doc.line(20, yPos, 190, yPos);
+            
+            // Group items by category
+            var categories = {};
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (!categories[item.category]) {
+                    categories[item.category] = [];
+                }
+                categories[item.category].push(item);
+            }
+            
+            // Add items grouped by category
+            yPos += 7;
+            doc.setFont(undefined, 'normal');
+            
+            for (var category in categories) {
+                // Category header
+                doc.setFont(undefined, 'bold');
+                doc.text(category, 20, yPos);
+                yPos += 5;
+                doc.setFont(undefined, 'normal');
+                
+                // Items in this category
+                var categoryItems = categories[category];
+                for (var k = 0; k < categoryItems.length; k++) {
+                    var item = categoryItems[k];
+                    
+                    // Check if we need a new page
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    
+                    doc.text(item.description, 20, yPos);
+                    doc.text(item.quantity.toString(), 130, yPos);
+                    doc.text('£' + item.markedUpRate.toFixed(2), 150, yPos);
+                    doc.text('£' + item.lineTotal.toFixed(2), 175, yPos);
+                    yPos += 5;
+                }
+                
+                yPos += 3;
+            }
+            
+            // Totals section
+            yPos += 5;
+            doc.line(20, yPos, 190, yPos);
+            yPos += 7;
+            
+            doc.setFont(undefined, 'normal');
+            doc.text('Subtotal', 150, yPos);
+            doc.text('£' + subtotal.toFixed(2), 175, yPos);
+            yPos += 6;
+            
+            doc.text('VAT (20%)', 150, yPos);
+            doc.text('£' + vat.toFixed(2), 175, yPos);
+            yPos += 6;
+            
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(12);
+            doc.text('Total', 150, yPos);
+            doc.text('£' + total.toFixed(2), 175, yPos);
+            
+            // Notes section
+            yPos += 10;
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'bold');
+            doc.text('Notes:', 20, yPos);
+            yPos += 5;
+            doc.setFont(undefined, 'normal');
+            doc.text('1. Estimate valid for 31 days', 20, yPos);
+            yPos += 4;
+            doc.text('2. Deposit of 30% is required to secure start date', 20, yPos);
+            yPos += 4;
+            doc.text('3. Extra works to be charged accordingly', 20, yPos);
+            
+            // Footer
+            yPos += 10;
+            doc.setFontSize(8);
+            doc.text('If you have any questions about this estimate, please contact traderbrotherslimited@gmail.com, or 07979309957.', 20, yPos);
+            yPos += 5;
+            doc.setFont(undefined, 'bold');
+            doc.text('Thank you for your business', 20, yPos);
+            
+            // Save the PDF
+            doc.save('TraderBros_Quote_' + quoteNumber + '.pdf');
+        }
+    </script>
+</body>
+</html>
