@@ -260,90 +260,91 @@ function previewQuote() {
     var vat = subtotal * 0.20;
     var total = subtotal + vat;
 
-    var categories = {};
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        if (!categories[item.category]) {
-            categories[item.category] = [];
-        }
-        categories[item.category].push(item);
-    }
-
-    var previewHtml = '<div class="preview-content">';
+    var previewHtml = '<div class="estimate-container">';
+    
+    // Header matching template
     previewHtml += '<div class="preview-header">';
-    previewHtml += '<div class="preview-logo"><img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="TB"></div>';
-    previewHtml += '<div class="preview-company-info">';
-    previewHtml += '<div class="preview-company">TRADER BROTHERS LTD</div>';
-    previewHtml += '<div>8 Craigour Terrace</div>';
-    previewHtml += '<div>Edinburgh, EH17 7PB</div>';
-    previewHtml += '<div>📞: 07979309957</div>';
-    previewHtml += '<div>✉: traderbrotherslimited@gmail.com</div>';
+    previewHtml += '<div class="company-info">';
+    previewHtml += '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>';
+    previewHtml += '<div class="company-details">';
+    previewHtml += '8 Craigour Terrace<br>';
+    previewHtml += 'Edinburgh, EH17 7PB<br>';
+    previewHtml += '07979309957<br>';
+    previewHtml += 'traderbrotherslimited@gmail.com';
+    previewHtml += '</div></div>';
+    previewHtml += '<div class="logo-container">';
+    previewHtml += '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo">';
     previewHtml += '</div></div>';
 
-    previewHtml += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; padding-top: 10px; border-top: 1px solid #ddd;">';
-    previewHtml += '<div>';
-    previewHtml += '<div style="font-weight: bold; margin-bottom: 8px;">Estimate for</div>';
-    previewHtml += '<div>' + clientName + '</div>';
-    previewHtml += '<div>' + projectName + '</div>';
-    previewHtml += '<div>' + projectAddress + '</div>';
-    if (clientPhone) previewHtml += '<div>' + clientPhone + '</div>';
-    previewHtml += '</div>';
-    previewHtml += '<div style="text-align: right;">';
-    previewHtml += '<div><strong>Date</strong> ' + quoteDate + '</div>';
-    previewHtml += '<div><strong>Estimate #</strong> ' + estNumber + '</div>';
-    previewHtml += '<div><strong>Customer ID</strong> ' + customerId + '</div>';
-    previewHtml += '<div><strong>Expiry date</strong> ' + expiryDate + '</div>';
-    previewHtml += '</div>';
-    previewHtml += '</div>';
+    // Estimate banner
+    previewHtml += '<div class="estimate-banner">Estimate for</div>';
 
-    previewHtml += '<table class="preview-table">';
+    // Info section
+    previewHtml += '<div class="info-section">';
+    previewHtml += '<div class="client-info">';
+    previewHtml += '<h3>' + clientName + '</h3>';
+    previewHtml += '<p>';
+    previewHtml += projectName + '<br>';
+    previewHtml += projectAddress;
+    if (clientPhone) previewHtml += '<br>' + clientPhone;
+    previewHtml += '</p></div>';
+    
+    previewHtml += '<div class="estimate-details">';
+    previewHtml += '<table class="details-table">';
+    previewHtml += '<tr><td class="detail-label">Date:</td><td class="detail-value">' + quoteDate + '</td></tr>';
+    previewHtml += '<tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + estNumber + '</td></tr>';
+    previewHtml += '<tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + customerId + '</td></tr>';
+    previewHtml += '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr>';
+    previewHtml += '</table></div></div>';
+
+    // Items table
+    previewHtml += '<table class="items-table">';
     previewHtml += '<thead><tr>';
-    previewHtml += '<th style="width: 55%;">Description</th>';
-    previewHtml += '<th style="text-align: center; width: 10%;">Qty</th>';
-    previewHtml += '<th style="text-align: right; width: 17%;">Unit price</th>';
-    previewHtml += '<th style="text-align: right; width: 18%;">Total price</th>';
-    previewHtml += '</tr></thead>';
-    previewHtml += '<tbody>';
+    previewHtml += '<th>Description</th>';
+    previewHtml += '<th>Qty</th>';
+    previewHtml += '<th>Unit price</th>';
+    previewHtml += '<th>Total price</th>';
+    previewHtml += '</tr></thead><tbody>';
 
-    for (var category in categories) {
-        previewHtml += '<tr class="preview-category">';
-        previewHtml += '<td colspan="4"><strong>' + category + '</strong></td>';
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        previewHtml += '<tr>';
+        previewHtml += '<td>' + item.description + '</td>';
+        previewHtml += '<td>' + item.quantity + '</td>';
+        previewHtml += '<td>£' + item.unitPrice.toFixed(2) + '</td>';
+        previewHtml += '<td>£' + item.lineTotal.toFixed(2) + '</td>';
         previewHtml += '</tr>';
-
-        var categoryItems = categories[category];
-        for (var k = 0; k < categoryItems.length; k++) {
-            var item = categoryItems[k];
-            previewHtml += '<tr>';
-            previewHtml += '<td>' + item.description + '</td>';
-            previewHtml += '<td style="text-align: center;">' + item.quantity + '</td>';
-            previewHtml += '<td style="text-align: right;">£' + item.unitPrice.toFixed(2) + '</td>';
-            previewHtml += '<td style="text-align: right;">£' + item.lineTotal.toFixed(2) + '</td>';
-            previewHtml += '</tr>';
-        }
     }
 
     previewHtml += '</tbody></table>';
 
-    previewHtml += '<div style="margin-top: 15px; font-size: 10px;">';
-    previewHtml += '<div style="margin-bottom: 10px;"><strong>Notes:</strong></div>';
-    previewHtml += '<div>1. Estimate valid for 31 days</div>';
-    previewHtml += '<div>2. Deposit of ' + depositPercent + '% is required to secure start date</div>';
-    previewHtml += '<div>3. Extra works to be charged accordingly</div>';
+    // Notes section
+    previewHtml += '<div class="notes-section">';
+    previewHtml += '<h3>Notes:</h3>';
+    previewHtml += '<ol>';
+    previewHtml += '<li>Estimate valid for 31 days</li>';
+    previewHtml += '<li>Payment of ' + depositPercent + '% is required to secure start date</li>';
+    previewHtml += '<li>Pending to be supplied by customer</li>';
+    previewHtml += '<li>Any extras to be charged accordingly</li>';
     var customNotes = document.getElementById('customNotes').value;
     if (customNotes) {
-        previewHtml += '<div style="margin-top: 8px;">4. ' + customNotes + '</div>';
+        previewHtml += '<li>' + customNotes + '</li>';
     }
-    previewHtml += '</div>';
+    previewHtml += '</ol></div>';
 
-    previewHtml += '<div style="text-align: right; margin-top: 15px; font-size: 10px;">';
-    previewHtml += '<div style="margin-bottom: 3px;"><strong>Subtotal</strong> £' + subtotal.toFixed(2) + '</div>';
-    previewHtml += '<div style="margin-bottom: 3px;"><strong>VAT</strong> £' + vat.toFixed(2) + '</div>';
-    previewHtml += '<div style="font-size: 12px; font-weight: bold; padding-top: 5px; border-top: 1px solid #ddd;">£' + total.toFixed(2) + '</div>';
-    previewHtml += '</div>';
+    // Totals section
+    previewHtml += '<div class="totals-section">';
+    previewHtml += '<div class="totals-box">';
+    previewHtml += '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div>';
+    previewHtml += '<div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div>';
+    previewHtml += '<div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div>';
+    previewHtml += '</div></div>';
 
-    previewHtml += '<div style="margin-top: 15px; font-size: 8px; border-top: 1px solid #ddd; padding-top: 8px;">';
-    previewHtml += 'If you have any questions about this estimate, please contact traderbrotherslimited@gmail.com, or 07979309957.<br>';
-    previewHtml += '<strong>Thank you for your business</strong>';
+    // Footer note
+    previewHtml += '<div class="footer-note">';
+    previewHtml += 'If you have any questions about this estimate, please contact<br>';
+    previewHtml += 'Trader Brothers on 07448835577';
+    previewHtml += '<div class="thank-you">Thank you for your business</div>';
     previewHtml += '</div>';
 
     previewHtml += '</div>';
@@ -379,174 +380,238 @@ function downloadQuote() {
     var { jsPDF } = window.jspdf;
     var doc = new jsPDF();
     
-    doc.setFillColor(251, 191, 36);
-    doc.rect(15, 10, 15, 15, 'F');
-    doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(26, 26, 26);
-    doc.text('TB', 22.5, 21, { align: 'center' });
+    // Colors
+    var goldColor = [188, 156, 34];
+    var darkGray = [51, 51, 51];
+    var mediumGray = [102, 102, 102];
+    var lightGray = [245, 245, 245];
     
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(13);
+    // Header - Company name
+    doc.setFontSize(24);
     doc.setFont(undefined, 'bold');
-    doc.text('TRADER BROTHERS LTD', 32, 15);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text('TRADER BROTHERS LTD', 15, 20);
     
+    // Company details
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text('8 Craigour Terrace', 32, 20);
-    doc.text('Edinburgh, EH17 7PB', 32, 24);
-    doc.text('07979309957', 32, 28);
-    doc.text('traderbrotherslimited@gmail.com', 32, 32);
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.text('8 Craigour Terrace', 15, 27);
+    doc.text('Edinburgh, EH17 7PB', 15, 31);
+    doc.text('07979309957', 15, 35);
+    doc.text('traderbrotherslimited@gmail.com', 15, 39);
     
+    // Logo placeholder on right (gold box)
+    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
+    doc.rect(170, 10, 25, 25, 'F');
+    
+    // Line under header
+    doc.setDrawColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.setLineWidth(0.5);
+    doc.line(15, 45, 195, 45);
+    
+    // Estimate banner
+    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
+    doc.rect(15, 52, 50, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
+    doc.text('Estimate for', 18, 57.5);
+    
+    // Client info
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
     doc.setFontSize(10);
-    doc.text('Estimate for', 15, 42);
+    doc.setFont(undefined, 'bold');
+    doc.text(clientName, 15, 68);
     
     doc.setFont(undefined, 'normal');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
     doc.setFontSize(9);
-    var leftY = 47;
-    doc.text(clientName, 15, leftY);
-    leftY += 4;
-    doc.text(projectName, 15, leftY);
-    leftY += 4;
-    
+    var yPos = 73;
+    doc.text(projectName, 15, yPos);
+    yPos += 4;
     var addressLines = doc.splitTextToSize(projectAddress, 70);
-    doc.text(addressLines, 15, leftY);
-    leftY += (addressLines.length * 4);
-    
+    doc.text(addressLines, 15, yPos);
+    yPos += (addressLines.length * 4);
     if (clientPhone) {
-        doc.text(clientPhone, 15, leftY);
+        doc.text(clientPhone, 15, yPos);
     }
     
-    var rightX = 130;
-    var rightY = 42;
-    doc.setFont(undefined, 'bold');
-    doc.text('Date', rightX, rightY);
+    // Estimate details table on right
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text(quoteDate, 180, rightY, { align: 'right' });
+    var rightY = 68;
+    var labelX = 130;
+    var valueX = 193;
+    
+    doc.text('Date:', labelX, rightY);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(quoteDate, valueX, rightY, { align: 'right' });
     
     rightY += 5;
-    doc.setFont(undefined, 'bold');
-    doc.text('Estimate #', rightX, rightY);
     doc.setFont(undefined, 'normal');
-    doc.text(estNumber, 180, rightY, { align: 'right' });
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.text('Estimate #:', labelX, rightY);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(estNumber, valueX, rightY, { align: 'right' });
     
     rightY += 5;
-    doc.setFont(undefined, 'bold');
-    doc.text('Customer ID', rightX, rightY);
     doc.setFont(undefined, 'normal');
-    doc.text(customerId, 180, rightY, { align: 'right' });
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.text('Customer Ref:', labelX, rightY);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(customerId, valueX, rightY, { align: 'right' });
     
     rightY += 5;
-    doc.setFont(undefined, 'bold');
-    doc.text('Expiry date', rightX, rightY);
     doc.setFont(undefined, 'normal');
-    doc.text(expiryDate, 180, rightY, { align: 'right' });
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.text('Expiry Date:', labelX, rightY);
+    // Gold box for expiry date
+    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
+    var expiryBoxWidth = doc.getTextWidth(expiryDate) + 6;
+    doc.rect(valueX - expiryBoxWidth, rightY - 3.5, expiryBoxWidth, 5.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'bold');
+    doc.text(expiryDate, valueX - 3, rightY, { align: 'right' });
     
-    var yPos = Math.max(leftY, rightY) + 10;
+    // Items table
+    yPos = Math.max(yPos, rightY) + 15;
     
-    doc.setFillColor(245, 245, 245);
-    doc.rect(15, yPos - 4, 180, 6, 'F');
+    // Table header
+    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.rect(15, yPos - 4, 180, 7, 'F');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
     doc.setFont(undefined, 'bold');
     doc.setFontSize(9);
     doc.text('Description', 17, yPos);
-    doc.text('Qty', 133, yPos, { align: 'center' });
+    doc.text('Qty', 140, yPos, { align: 'right' });
     doc.text('Unit price', 165, yPos, { align: 'right' });
     doc.text('Total price', 193, yPos, { align: 'right' });
     
-    yPos += 6;
-    doc.setFont(undefined, 'normal');
+    // Bottom border of header
+    doc.setDrawColor(221, 221, 221);
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos + 2, 195, yPos + 2);
     
-    var categories = {};
+    yPos += 8;
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    
+    // Table items
     for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        if (!categories[item.category]) {
-            categories[item.category] = [];
-        }
-        categories[item.category].push(item);
-    }
-    
-    for (var category in categories) {
+        
         if (yPos > 260) {
             doc.addPage();
             yPos = 20;
         }
         
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(9);
-        doc.text(category, 17, yPos);
-        yPos += 5;
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(8);
+        var descLines = doc.splitTextToSize(item.description, 115);
+        doc.text(descLines, 17, yPos);
+        doc.text(String(item.quantity), 140, yPos, { align: 'right' });
+        doc.text('£' + item.unitPrice.toFixed(2), 165, yPos, { align: 'right' });
+        doc.text('£' + item.lineTotal.toFixed(2), 193, yPos, { align: 'right' });
+        yPos += (descLines.length * 4) + 2;
         
-        var categoryItems = categories[category];
-        for (var k = 0; k < categoryItems.length; k++) {
-            var item = categoryItems[k];
-            
-            if (yPos > 260) {
-                doc.addPage();
-                yPos = 20;
-            }
-            
-            var descLines = doc.splitTextToSize(item.description, 110);
-            doc.text(descLines, 17, yPos);
-            doc.text(String(item.quantity), 133, yPos, { align: 'center' });
-            doc.text('£' + item.unitPrice.toFixed(2), 165, yPos, { align: 'right' });
-            doc.text('£' + item.lineTotal.toFixed(2), 193, yPos, { align: 'right' });
-            yPos += (descLines.length * 4);
-        }
-        yPos += 2;
+        // Line separator
+        doc.setDrawColor(238, 238, 238);
+        doc.setLineWidth(0.1);
+        doc.line(15, yPos - 1, 195, yPos - 1);
     }
     
-    yPos += 5;
+    yPos += 10;
     if (yPos > 230) {
         doc.addPage();
         yPos = 20;
     }
     
+    // Notes section
+    doc.setFillColor(249, 249, 249);
+    doc.rect(15, yPos, 180, 35, 'F');
+    doc.setDrawColor(goldColor[0], goldColor[1], goldColor[2]);
+    doc.setLineWidth(2);
+    doc.line(15, yPos, 15, yPos + 35);
+    
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
     doc.setFont(undefined, 'bold');
     doc.setFontSize(9);
-    doc.text('Notes:', 15, yPos);
-    yPos += 4;
+    doc.text('Notes:', 20, yPos + 6);
+    
     doc.setFont(undefined, 'normal');
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
     doc.setFontSize(8);
-    doc.text('1. Estimate valid for 31 days', 15, yPos);
-    yPos += 4;
-    doc.text('2. Deposit of ' + depositPercent + '% is required to secure start date', 15, yPos);
-    yPos += 4;
-    doc.text('3. Extra works to be charged accordingly', 15, yPos);
+    var notesY = yPos + 12;
+    doc.text('1. Estimate valid for 31 days', 23, notesY);
+    notesY += 4.5;
+    doc.text('2. Payment of ' + depositPercent + '% is required to secure start date', 23, notesY);
+    notesY += 4.5;
+    doc.text('3. Pending to be supplied by customer', 23, notesY);
+    notesY += 4.5;
+    doc.text('4. Any extras to be charged accordingly', 23, notesY);
     
     var customNotes = document.getElementById('customNotes').value;
     if (customNotes) {
-        yPos += 4;
-        var noteLines = doc.splitTextToSize('4. ' + customNotes, 180);
-        doc.text(noteLines, 15, yPos);
-        yPos += (noteLines.length * 4);
+        notesY += 4.5;
+        var noteLines = doc.splitTextToSize('5. ' + customNotes, 165);
+        doc.text(noteLines, 23, notesY);
     }
     
-    yPos += 8;
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text('Subtotal', 130, yPos);
-    doc.text('£' + subtotal.toFixed(2), 193, yPos, { align: 'right' });
-    yPos += 5;
-    doc.text('VAT', 130, yPos);
-    doc.text('£' + vat.toFixed(2), 193, yPos, { align: 'right' });
-    yPos += 6;
-    doc.setFontSize(11);
-    doc.text('£' + total.toFixed(2), 193, yPos, { align: 'right' });
+    yPos += 45;
     
-    doc.setFontSize(7);
+    // Totals section
+    var totalsX = 130;
+    var totalsValueX = 193;
+    
+    // Subtotal
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
     doc.setFont(undefined, 'normal');
-    doc.text('If you have any questions about this estimate, please contact traderbrotherslimited@gmail.com, or 07979309957.', 15, 285);
+    doc.setFontSize(9);
+    doc.setDrawColor(221, 221, 221);
+    doc.setLineWidth(0.3);
+    doc.line(totalsX, yPos, 195, yPos);
+    yPos += 5;
+    
+    doc.text('Subtotal', totalsX, yPos);
+    doc.text('£' + subtotal.toFixed(2), totalsValueX, yPos, { align: 'right' });
+    yPos += 5;
+    
+    // VAT
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.text('VAT', totalsX, yPos);
+    doc.text('£' + vat.toFixed(2), totalsValueX, yPos, { align: 'right' });
+    yPos += 7;
+    
+    // Final total with gold background
+    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
+    doc.rect(totalsX, yPos - 5, 65, 9, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'bold');
-    doc.text('Thank you for your business', 15, 290);
+    doc.setFontSize(12);
+    doc.text('Total', totalsX + 5, yPos);
+    doc.text('£' + total.toFixed(2), totalsValueX - 5, yPos, { align: 'right' });
+    
+    // Footer
+    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
+    doc.setFont(undefined, 'italic');
+    doc.setFontSize(8);
+    doc.text('If you have any questions about this estimate, please contact', 105, 273, { align: 'center' });
+    doc.text('Trader Brothers on 07448835577', 105, 278, { align: 'center' });
+    
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.setFontSize(9);
+    doc.text('Thank you for your business', 105, 285, { align: 'center' });
     
     localStorage.setItem('traderBrosEstimateCount', estimateNumber);
     estimateNumber++;
     updateEstimateCounter();
     
-    var filename = 'Estimate #' + estNumber + ' ' + projectAddress.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    var filename = 'Estimate_' + estNumber + '_' + clientName.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
     doc.save(filename);
     
     closePreview();
