@@ -1,8 +1,4 @@
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-});
-
+// Global variables
 var items = [];
 var currentRateType = 'job';
 var estimateNumber = 1;
@@ -10,38 +6,7 @@ var estimateNumber = 1;
 // PDFShift API Configuration
 const PDFSHIFT_API_KEY = 'sk_baa46c861371ec5f60ab2e83221fdac1ccce517b';
 
-function initializeApp() {
-    // Load estimate counter
-    if (localStorage.getItem('traderBrosEstimateCount')) {
-        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
-    }
-    updateEstimateCounter();
-    
-    // Set up event listeners
-    setupEventListeners();
-}
-
-function setupEventListeners() {
-    // Client name input
-    document.getElementById('clientName').addEventListener('input', handleClientNameInput);
-    
-    // Trade category change
-    document.getElementById('tradeCategory').addEventListener('change', handleTradeCategoryChange);
-    
-    // Rate type buttons
-    document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-        btn.addEventListener('click', handleRateTypeClick);
-    });
-    
-    // Modal close on outside click
-    window.onclick = function(event) {
-        var modal = document.getElementById('previewModal');
-        if (event.target == modal) {
-            closePreview();
-        }
-    };
-}
-
+// Trade rates configuration
 var tradeRates = {
     'Downtakings': { hourly: 30, daily: 220, job: 0 },
     'General Building': { hourly: 30, daily: 230, job: 0 },
@@ -69,10 +34,100 @@ var tradeRates = {
     'Materials': { hourly: 0, daily: 0, job: 0 }
 };
 
-if (localStorage.getItem('traderBrosEstimateCount')) {
-    estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+function initializeApp() {
+    // Load estimate counter
+    if (localStorage.getItem('traderBrosEstimateCount')) {
+        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+    }
+    updateEstimateCounter();
+    
+    // Set up event listeners
+    setupEventListeners();
 }
-updateEstimateCounter();
+
+function setupEventListeners() {
+    // Client name input
+    var clientNameInput = document.getElementById('clientName');
+    if (clientNameInput) {
+        clientNameInput.addEventListener('input', handleClientNameInput);
+    }
+    
+    // Trade category change
+    var tradeCategorySelect = document.getElementById('tradeCategory');
+    if (tradeCategorySelect) {
+        tradeCategorySelect.addEventListener('change', handleTradeCategoryChange);
+    }
+    
+    // Rate type buttons
+    document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
+        btn.addEventListener('click', handleRateTypeClick);
+    });
+    
+    // Add item button
+    var addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            addItem();
+        });
+    }
+    
+    // Preview button
+    var previewBtn = document.getElementById('previewBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            previewQuote();
+        });
+    }
+    
+    // Download buttons
+    var downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadQuote();
+        });
+    }
+    
+    var downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadQuote();
+        });
+    }
+    
+    // Close modal buttons
+    var closePreviewBtn = document.getElementById('closePreviewBtn');
+    if (closePreviewBtn) {
+        closePreviewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePreview();
+        });
+    }
+    
+    var closeModalBtn = document.getElementById('closeModalBtn');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePreview();
+        });
+    }
+    
+    // Modal close on outside click
+    window.onclick = function(event) {
+        var modal = document.getElementById('previewModal');
+        if (event.target == modal) {
+            closePreview();
+        }
+    };
+}
 
 function updateEstimateCounter() {
     var counterElement = document.getElementById('estimateCounter');
@@ -135,15 +190,19 @@ function handleRateTypeClick(event) {
     event.preventDefault();
     event.stopPropagation();
     
+    // Remove active class from all buttons
     document.querySelectorAll('.rate-type-btn').forEach(function(b) {
         b.classList.remove('active');
     });
+    
+    // Add active class to clicked button
     this.classList.add('active');
     currentRateType = this.getAttribute('data-type');
     
     var customUnitGroup = document.getElementById('customUnitGroup');
     var rateLabel = document.getElementById('rateLabel');
     
+    // Update UI based on rate type
     if (currentRateType === 'custom') {
         customUnitGroup.classList.remove('hidden');
         rateLabel.textContent = 'Unit Price (£) *';
@@ -158,8 +217,11 @@ function handleRateTypeClick(event) {
         rateLabel.textContent = 'Hourly Rate (£) *';
     }
     
+    // Update price from trade rates if applicable
     updatePriceFromTrade();
 }
+
+function updatePriceFromTrade() {
     var selectedTrade = document.getElementById('tradeCategory').value;
     if (selectedTrade && tradeRates[selectedTrade]) {
         var rates = tradeRates[selectedTrade];
@@ -178,35 +240,6 @@ function handleRateTypeClick(event) {
         }
     }
 }
-
-document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.rate-type-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        this.classList.add('active');
-        currentRateType = this.getAttribute('data-type');
-        
-        var customUnitGroup = document.getElementById('customUnitGroup');
-        var rateLabel = document.getElementById('rateLabel');
-        
-        if (currentRateType === 'custom') {
-            customUnitGroup.classList.remove('hidden');
-            rateLabel.textContent = 'Unit Price (£) *';
-        } else if (currentRateType === 'daily') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Day Rate (£) *';
-        } else if (currentRateType === 'job') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Per Job Rate (£) *';
-        } else {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Hourly Rate (£) *';
-        }
-        
-        updatePriceFromTrade();
-    });
-});
 
 function addItem() {
     console.log('addItem called');
@@ -819,11 +852,6 @@ async function downloadQuote() {
         }
     }
     
-    if (!downloadBtn) {
-        // Fallback if button not found
-        console.log('Download button not found, proceeding anyway');
-    }
-    
     // Show loading state
     var originalText = downloadBtn ? downloadBtn.textContent : '';
     if (downloadBtn) {
@@ -944,6 +972,3 @@ async function downloadQuote() {
         }
     }
 }
-
-// Remove old window.onclick and replace with proper initialization
-// (already handled in setupEventListeners)
