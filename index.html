@@ -7,197 +7,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fbbf24">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Additional preview styles for modal */
-        .estimate-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #333;
-        }
-        .company-info {
-            flex: 1;
-        }
-        .company-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .company-name .highlight {
-            color: #d4af37;
-        }
-        .company-details {
-            font-size: 11px;
-            line-height: 1.6;
-            color: #666;
-        }
-        .logo-container {
-            flex-shrink: 0;
-        }
-        .logo-container img {
-            width: 120px;
-            height: auto;
-            display: block;
-        }
-        .estimate-banner {
-            background: linear-gradient(135deg, #bc9c22, #d4af37);
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            display: inline-block;
-            font-weight: bold;
-            font-size: 16px;
-            color: white;
-        }
-        .info-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        .client-info {
-            flex: 1;
-        }
-        .client-info h3 {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .client-info p {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #333;
-            font-weight: 500;
-        }
-        .estimate-details {
-            flex: 0 0 250px;
-        }
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .details-table td {
-            padding: 8px 10px;
-            font-size: 13px;
-        }
-        .detail-label {
-            color: #666;
-            text-align: left;
-            width: 120px;
-        }
-        .detail-value {
-            font-weight: bold;
-            color: #333;
-            text-align: left;
-        }
-        .expiry-date {
-            background: linear-gradient(135deg, #bc9c22, #d4af37);
-            padding: 5px 10px;
-            display: inline-block;
-            color: white;
-            font-weight: bold;
-        }
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 30px 0;
-        }
-        .items-table thead {
-            background: #f5f5f5;
-        }
-        .items-table th {
-            padding: 14px 12px;
-            text-align: left;
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            border-bottom: 2px solid #ddd;
-        }
-        .items-table th:nth-child(2),
-        .items-table th:nth-child(3),
-        .items-table th:nth-child(4) {
-            text-align: right;
-            width: 100px;
-        }
-        .items-table td {
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: normal;
-            border-bottom: 1px solid #f0f0f0;
-            color: #555;
-        }
-        .items-table td:nth-child(2),
-        .items-table td:nth-child(3),
-        .items-table td:nth-child(4) {
-            text-align: right;
-        }
-        .notes-section {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-left: 3px solid #bc9c22;
-        }
-        .notes-section h3 {
-            font-size: 13px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        .notes-section ol {
-            margin-left: 20px;
-            font-size: 12px;
-            line-height: 1.8;
-            color: #666;
-        }
-        .totals-section-preview {
-            margin-top: 30px;
-            display: flex;
-            justify-content: flex-end;
-        }
-        .totals-box {
-            width: 300px;
-        }
-        .total-row-preview {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 15px;
-            font-size: 13px;
-        }
-        .total-row-preview.subtotal {
-            border-top: 1px solid #ddd;
-        }
-        .total-row-preview.vat {
-            color: #666;
-        }
-        .total-row-preview.final {
-            background: linear-gradient(135deg, #bc9c22, #d4af37);
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            border-top: 2px solid #333;
-            margin-top: 5px;
-        }
-        .footer-note {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            font-size: 11px;
-            color: #666;
-            font-style: italic;
-        }
-        .thank-you {
-            margin-top: 15px;
-            font-weight: bold;
-            color: #333;
-            font-size: 12px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -312,7 +121,7 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-primary" id="addItemBtn">Add Item to Quote</button>
+            <button type="button" class="btn btn-primary" onclick="addItem()">Add Item to Quote</button>
         </div>
 
         <div class="section" id="quoteSection" style="display: none;">
@@ -343,8 +152,8 @@
         </div>
 
         <div id="generateSection" style="display: none; margin-top: 20px; text-align: center;">
-            <button type="button" class="btn btn-success" id="previewBtn">Preview Quote</button>
-            <button type="button" class="btn btn-secondary" id="downloadBtn">Download PDF</button>
+            <button type="button" class="btn btn-success" onclick="previewQuote()">Preview Quote</button>
+            <button type="button" class="btn btn-secondary" onclick="downloadQuote()">Download PDF</button>
         </div>
     </div>
 
@@ -352,14 +161,14 @@
     <div id="previewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="close" id="closePreviewBtn">&times;</span>
+                <span class="close" onclick="closePreview()">&times;</span>
                 <h2>Quote Preview</h2>
             </div>
             <div class="modal-body" id="previewBody">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" id="downloadPdfBtn">Download PDF</button>
-                <button type="button" class="btn btn-secondary" id="closeModalBtn">Close</button>
+                <button type="button" class="btn btn-success" onclick="downloadQuote()">Download PDF</button>
+                <button type="button" class="btn btn-secondary" onclick="closePreview()">Close</button>
             </div>
         </div>
     </div>
