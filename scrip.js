@@ -46,30 +46,85 @@ function initializeApp() {
 
 function setupEventListeners() {
     // Client name
-    document.getElementById('clientName')?.addEventListener('input', handleClientNameInput);
+    var clientNameInput = document.getElementById('clientName');
+    if (clientNameInput) {
+        clientNameInput.addEventListener('input', handleClientNameInput);
+    }
     
     // Trade category
-    document.getElementById('tradeCategory')?.addEventListener('change', handleTradeCategoryChange);
+    var tradeCategorySelect = document.getElementById('tradeCategory');
+    if (tradeCategorySelect) {
+        tradeCategorySelect.addEventListener('change', handleTradeCategoryChange);
+    }
     
-    // Rate type buttons - FIXED with proper binding
-    document.querySelectorAll('.rate-type-btn').forEach(btn => {
+    // Rate type buttons - Fixed with proper event delegation
+    var rateTypeBtns = document.querySelectorAll('.rate-type-btn');
+    rateTypeBtns.forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            handleRateTypeClick(this);
+            e.stopPropagation();
+            handleRateTypeClick(btn);
         });
     });
     
-    // Buttons
-    document.getElementById('addItemBtn')?.addEventListener('click', e => { e.preventDefault(); addItem(); });
-    document.getElementById('previewBtn')?.addEventListener('click', e => { e.preventDefault(); previewQuote(); });
-    document.getElementById('downloadBtn')?.addEventListener('click', e => { e.preventDefault(); downloadQuote(); });
-    document.getElementById('downloadPdfBtn')?.addEventListener('click', e => { e.preventDefault(); downloadQuote(); });
-    document.getElementById('closePreviewBtn')?.addEventListener('click', e => { e.preventDefault(); closePreview(); });
-    document.getElementById('closeModalBtn')?.addEventListener('click', e => { e.preventDefault(); closePreview(); });
+    // Add item button
+    var addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            addItem();
+        });
+    }
+    
+    // Preview button
+    var previewBtn = document.getElementById('previewBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            previewQuote();
+        });
+    }
+    
+    // Download buttons
+    var downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadQuote();
+        });
+    }
+    
+    var downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            downloadQuote();
+        });
+    }
+    
+    // Close modal buttons
+    var closePreviewBtn = document.getElementById('closePreviewBtn');
+    if (closePreviewBtn) {
+        closePreviewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePreview();
+        });
+    }
+    
+    var closeModalBtn = document.getElementById('closeModalBtn');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePreview();
+        });
+    }
     
     // Modal close on outside click
-    window.onclick = e => {
-        if (e.target == document.getElementById('previewModal')) closePreview();
+    window.onclick = function(e) {
+        var modal = document.getElementById('previewModal');
+        if (e.target == modal) {
+            closePreview();
+        }
     };
 }
 
@@ -80,8 +135,10 @@ function updateEstimateCounter() {
 
 function handleClientNameInput() {
     var name = this.value.trim();
+    var customerIdInput = document.getElementById('customerId');
+    
     if (!name) {
-        document.getElementById('customerId').value = '';
+        customerIdInput.value = '';
         return;
     }
     
@@ -97,7 +154,7 @@ function handleClientNameInput() {
                      Math.floor(1000 + Math.random() * 9000);
     }
     
-    document.getElementById('customerId').value = customerId;
+    customerIdInput.value = customerId;
 }
 
 function handleTradeCategoryChange() {
@@ -121,8 +178,13 @@ function handleTradeCategoryChange() {
 }
 
 function handleRateTypeClick(btn) {
-    // Remove active from all, add to clicked
-    document.querySelectorAll('.rate-type-btn').forEach(b => b.classList.remove('active'));
+    // Remove active from all buttons
+    var allBtns = document.querySelectorAll('.rate-type-btn');
+    allBtns.forEach(function(b) {
+        b.classList.remove('active');
+    });
+    
+    // Add active to clicked button
     btn.classList.add('active');
     
     currentRateType = btn.getAttribute('data-type');
@@ -135,9 +197,13 @@ function handleRateTypeClick(btn) {
         rateLabel.textContent = 'Unit Price (£) *';
     } else {
         customUnitGroup.classList.add('hidden');
-        rateLabel.textContent = currentRateType === 'daily' ? 'Day Rate (£) *' : 
-                                currentRateType === 'job' ? 'Per Job Rate (£) *' : 
-                                'Hourly Rate (£) *';
+        if (currentRateType === 'daily') {
+            rateLabel.textContent = 'Day Rate (£) *';
+        } else if (currentRateType === 'job') {
+            rateLabel.textContent = 'Per Job Rate (£) *';
+        } else {
+            rateLabel.textContent = 'Hourly Rate (£) *';
+        }
     }
     
     updatePriceFromTrade();
@@ -150,7 +216,9 @@ function updatePriceFromTrade() {
     var rates = tradeRates[selectedTrade];
     var price = rates[currentRateType] || 0;
     
-    if (price > 0) document.getElementById('unitPrice').value = price;
+    if (price > 0) {
+        document.getElementById('unitPrice').value = price;
+    }
 }
 
 function addItem() {
@@ -222,36 +290,37 @@ function updateQuoteTable() {
     quoteSection.style.display = 'block';
     generateSection.style.display = 'block';
 
-    var subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    var subtotal = items.reduce(function(sum, item) {
+        return sum + item.lineTotal;
+    }, 0);
     var vat = subtotal * 0.20;
     var total = subtotal + vat;
     
-    var html = items.map((item, i) => `
-        <tr>
-            <td>${item.category}</td>
-            <td>${item.description}</td>
-            <td class="text-center">${item.quantity}</td>
-            <td class="text-right">£${item.unitPrice.toFixed(2)}</td>
-            <td class="text-right" style="font-weight: 600;">£${item.lineTotal.toFixed(2)}</td>
-            <td class="text-center"><button class="btn-delete" onclick="removeItem(${i}); return false;">Delete</button></td>
-        </tr>
-    `).join('') + `
-        <tr class="total-row">
-            <td colspan="4" class="text-right">Subtotal:</td>
-            <td class="text-right">£${subtotal.toFixed(2)}</td>
-            <td></td>
-        </tr>
-        <tr class="total-row">
-            <td colspan="4" class="text-right">VAT (20%):</td>
-            <td class="text-right">£${vat.toFixed(2)}</td>
-            <td></td>
-        </tr>
-        <tr class="total-row">
-            <td colspan="4" class="text-right" style="font-size: 16px;"><strong>TOTAL:</strong></td>
-            <td class="text-right" style="font-size: 16px;"><strong>£${total.toFixed(2)}</strong></td>
-            <td></td>
-        </tr>
-    `;
+    var html = items.map(function(item, i) {
+        return '<tr>' +
+            '<td>' + item.category + '</td>' +
+            '<td>' + item.description + '</td>' +
+            '<td class="text-center">' + item.quantity + '</td>' +
+            '<td class="text-right">£' + item.unitPrice.toFixed(2) + '</td>' +
+            '<td class="text-right" style="font-weight: 600;">£' + item.lineTotal.toFixed(2) + '</td>' +
+            '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + '); return false;">Delete</button></td>' +
+        '</tr>';
+    }).join('') + 
+        '<tr class="total-row">' +
+            '<td colspan="4" class="text-right">Subtotal:</td>' +
+            '<td class="text-right">£' + subtotal.toFixed(2) + '</td>' +
+            '<td></td>' +
+        '</tr>' +
+        '<tr class="total-row">' +
+            '<td colspan="4" class="text-right">VAT (20%):</td>' +
+            '<td class="text-right">£' + vat.toFixed(2) + '</td>' +
+            '<td></td>' +
+        '</tr>' +
+        '<tr class="total-row">' +
+            '<td colspan="4" class="text-right" style="font-size: 16px;"><strong>TOTAL:</strong></td>' +
+            '<td class="text-right" style="font-size: 16px;"><strong>£' + total.toFixed(2) + '</strong></td>' +
+            '<td></td>' +
+        '</tr>';
 
     tbody.innerHTML = html;
 }
@@ -272,7 +341,10 @@ function closePreview() {
 }
 
 function getQuoteData() {
-    var subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    var subtotal = items.reduce(function(sum, item) {
+        return sum + item.lineTotal;
+    }, 0);
+    
     return {
         clientName: document.getElementById('clientName').value || '[Client Name]',
         clientPhone: document.getElementById('clientPhone').value,
@@ -291,172 +363,170 @@ function getQuoteData() {
 }
 
 function generatePreviewHTML(data) {
-    var itemsHTML = items.map(item => `
-        <tr>
-            <td>${item.description}</td>
-            <td>${item.quantity}</td>
-            <td>£${item.unitPrice.toFixed(2)}</td>
-            <td>£${item.lineTotal.toFixed(2)}</td>
-        </tr>
-    `).join('');
+    var itemsHTML = items.map(function(item) {
+        return '<tr>' +
+            '<td>' + item.description + '</td>' +
+            '<td>' + item.quantity + '</td>' +
+            '<td>£' + item.unitPrice.toFixed(2) + '</td>' +
+            '<td>£' + item.lineTotal.toFixed(2) + '</td>' +
+        '</tr>';
+    }).join('');
 
-    return `
-        <div class="estimate-container">
-            <div class="preview-header">
-                <div class="company-info">
-                    <div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>
-                    <div class="company-details">
-                        8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>
-                        07979309957<br>traderbrotherslimited@gmail.com
-                    </div>
-                </div>
-                <div class="logo-container">
-                    <img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo">
-                </div>
-            </div>
-            <div class="estimate-banner">Estimate for</div>
-            <div class="info-section">
-                <div class="client-info">
-                    <h3>${data.clientName}</h3>
-                    <p>${data.projectName}<br>${data.projectAddress}${data.clientPhone ? '<br>' + data.clientPhone : ''}</p>
-                </div>
-                <div class="estimate-details">
-                    <table class="details-table">
-                        <tr><td class="detail-label">Date:</td><td class="detail-value">${data.quoteDate}</td></tr>
-                        <tr><td class="detail-label">Estimate #:</td><td class="detail-value">${data.estNumber}</td></tr>
-                        <tr><td class="detail-label">Customer Ref:</td><td class="detail-value">${data.customerId}</td></tr>
-                        <tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">${data.expiryDate}</td></tr>
-                    </table>
-                </div>
-            </div>
-            <table class="items-table">
-                <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>
-                <tbody>${itemsHTML}</tbody>
-            </table>
-            <div class="notes-section">
-                <h3>Notes:</h3>
-                <ol>
-                    <li>Estimate valid for 31 days</li>
-                    <li>Payment of ${data.depositPercent}% required to secure start date</li>
-                    <li>Pending to be supplied by customer</li>
-                    <li>Any extras charged accordingly</li>
-                    ${data.customNotes ? '<li>' + data.customNotes + '</li>' : ''}
-                </ol>
-            </div>
-            <div class="totals-section-preview">
-                <div class="totals-box">
-                    <div class="total-row-preview subtotal"><span>Subtotal</span><span>£${data.subtotal.toFixed(2)}</span></div>
-                    <div class="total-row-preview vat"><span>VAT</span><span>£${data.vat.toFixed(2)}</span></div>
-                    <div class="total-row-preview final"><span>Total</span><span>£${data.total.toFixed(2)}</span></div>
-                </div>
-            </div>
-            <div class="footer-note">
-                If you have any questions about this estimate, please contact<br>
-                Trader Brothers on 07448835577
-                <div class="thank-you">Thank you for your business</div>
-            </div>
-        </div>
-    `;
+    return '<div class="estimate-container">' +
+        '<div class="preview-header">' +
+            '<div class="company-info">' +
+                '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>' +
+                '<div class="company-details">' +
+                    '8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>' +
+                    '07979309957<br>traderbrotherslimited@gmail.com' +
+                '</div>' +
+            '</div>' +
+            '<div class="logo-container">' +
+                '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo">' +
+            '</div>' +
+        '</div>' +
+        '<div class="estimate-banner">Estimate for</div>' +
+        '<div class="info-section">' +
+            '<div class="client-info">' +
+                '<h3>' + data.clientName + '</h3>' +
+                '<p>' + data.projectName + '<br>' + data.projectAddress + (data.clientPhone ? '<br>' + data.clientPhone : '') + '</p>' +
+            '</div>' +
+            '<div class="estimate-details">' +
+                '<table class="details-table">' +
+                    '<tr><td class="detail-label">Date:</td><td class="detail-value">' + data.quoteDate + '</td></tr>' +
+                    '<tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + data.estNumber + '</td></tr>' +
+                    '<tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + data.customerId + '</td></tr>' +
+                    '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + data.expiryDate + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+        '</div>' +
+        '<table class="items-table">' +
+            '<thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>' +
+            '<tbody>' + itemsHTML + '</tbody>' +
+        '</table>' +
+        '<div class="notes-section">' +
+            '<h3>Notes:</h3>' +
+            '<ol>' +
+                '<li>Estimate valid for 31 days</li>' +
+                '<li>Payment of ' + data.depositPercent + '% required to secure start date</li>' +
+                '<li>Pending to be supplied by customer</li>' +
+                '<li>Any extras charged accordingly</li>' +
+                (data.customNotes ? '<li>' + data.customNotes + '</li>' : '') +
+            '</ol>' +
+        '</div>' +
+        '<div class="totals-section-preview">' +
+            '<div class="totals-box">' +
+                '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + data.subtotal.toFixed(2) + '</span></div>' +
+                '<div class="total-row-preview vat"><span>VAT</span><span>£' + data.vat.toFixed(2) + '</span></div>' +
+                '<div class="total-row-preview final"><span>Total</span><span>£' + data.total.toFixed(2) + '</span></div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="footer-note">' +
+            'If you have any questions about this estimate, please contact<br>' +
+            'Trader Brothers on 07448835577' +
+            '<div class="thank-you">Thank you for your business</div>' +
+        '</div>' +
+    '</div>';
 }
 
 function generateCompleteHTML() {
     var data = getQuoteData();
-    var itemsRows = items.map(item => `
-        <tr>
-            <td>${item.description}</td>
-            <td>${item.quantity}</td>
-            <td>£${item.unitPrice.toFixed(2)}</td>
-            <td>£${item.lineTotal.toFixed(2)}</td>
-        </tr>
-    `).join('');
+    var itemsRows = items.map(function(item) {
+        return '<tr>' +
+            '<td>' + item.description + '</td>' +
+            '<td>' + item.quantity + '</td>' +
+            '<td>£' + item.unitPrice.toFixed(2) + '</td>' +
+            '<td>£' + item.lineTotal.toFixed(2) + '</td>' +
+        '</tr>';
+    }).join('');
 
-    return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Estimate - ${data.clientName}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;padding:20px;color:#333}
-.header{display:flex;justify-content:space-between;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #333}
-.company-name{font-size:24px;font-weight:bold;margin-bottom:10px}
-.company-name .highlight{color:#d4af37}
-.company-details{font-size:11px;line-height:1.6;color:#666}
-.logo{width:120px;height:auto}
-.estimate-banner{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:15px 20px;margin-bottom:25px;display:inline-block;font-weight:bold;color:white}
-.info-section{display:flex;justify-content:space-between;margin-bottom:30px}
-.client-info h3{font-size:16px;color:#666;margin-bottom:10px;font-weight:bold}
-.client-info p{font-size:15px;line-height:1.6;font-weight:500}
-.details-table{width:100%;border-collapse:collapse}
-.details-table td{padding:8px 10px;font-size:13px}
-.detail-label{color:#666;width:120px}
-.detail-value{font-weight:bold}
-.expiry-date{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:5px 10px;color:white;font-weight:bold}
-.items-table{width:100%;border-collapse:collapse;margin:30px 0}
-.items-table thead{background:#f5f5f5}
-.items-table th{padding:14px 12px;text-align:left;font-weight:bold;border-bottom:2px solid #ddd}
-.items-table th:nth-child(2),.items-table th:nth-child(3),.items-table th:nth-child(4){text-align:right}
-.items-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f0f0}
-.items-table td:nth-child(2),.items-table td:nth-child(3),.items-table td:nth-child(4){text-align:right}
-.notes-section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:3px solid #bc9c22}
-.notes-section h3{font-size:13px;margin-bottom:10px}
-.notes-section ol{margin-left:20px;font-size:12px;line-height:1.8;color:#666}
-.totals-section-preview{margin-top:30px;display:flex;justify-content:flex-end}
-.totals-box{width:300px}
-.total-row-preview{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px}
-.total-row-preview.subtotal{border-top:1px solid #ddd}
-.total-row-preview.vat{color:#666}
-.total-row-preview.final{background:linear-gradient(135deg,#bc9c22,#d4af37);color:white;font-weight:bold;font-size:16px;margin-top:5px}
-.footer-note{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:11px;color:#666;font-style:italic}
-.thank-you{margin-top:15px;font-weight:bold;color:#333}
-</style></head><body>
-<div class="header">
-    <div class="company-info">
-        <div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>
-        <div class="company-details">8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>07979309957<br>traderbrotherslimited@gmail.com</div>
-    </div>
-    <div class="logo-container">
-        <img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo" class="logo">
-    </div>
-</div>
-<div class="estimate-banner">Estimate for</div>
-<div class="info-section">
-    <div class="client-info">
-        <h3>${data.clientName}</h3>
-        <p>${data.projectName}<br>${data.projectAddress}${data.clientPhone ? '<br>' + data.clientPhone : ''}</p>
-    </div>
-    <div class="estimate-details">
-        <table class="details-table">
-            <tr><td class="detail-label">Date:</td><td class="detail-value">${data.quoteDate}</td></tr>
-            <tr><td class="detail-label">Estimate #:</td><td class="detail-value">${data.estNumber}</td></tr>
-            <tr><td class="detail-label">Customer Ref:</td><td class="detail-value">${data.customerId}</td></tr>
-            <tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">${data.expiryDate}</td></tr>
-        </table>
-    </div>
-</div>
-<table class="items-table">
-    <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>
-    <tbody>${itemsRows}</tbody>
-</table>
-<div class="notes-section">
-    <h3>Notes:</h3>
-    <ol>
-        <li>Estimate valid for 31 days</li>
-        <li>Payment of ${data.depositPercent}% required to secure start date</li>
-        <li>Pending to be supplied by customer</li>
-        <li>Any extras charged accordingly</li>
-        ${data.customNotes ? '<li>' + data.customNotes + '</li>' : ''}
-    </ol>
-</div>
-<div class="totals-section-preview">
-    <div class="totals-box">
-        <div class="total-row-preview subtotal"><span>Subtotal</span><span>£${data.subtotal.toFixed(2)}</span></div>
-        <div class="total-row-preview vat"><span>VAT</span><span>£${data.vat.toFixed(2)}</span></div>
-        <div class="total-row-preview final"><span>Total</span><span>£${data.total.toFixed(2)}</span></div>
-    </div>
-</div>
-<div class="footer-note">
-    If you have any questions, please contact Trader Brothers on 07448835577
-    <div class="thank-you">Thank you for your business</div>
-</div>
-</body></html>`;
+    return '<!DOCTYPE html>' +
+'<html><head><meta charset="UTF-8"><title>Estimate - ' + data.clientName + '</title>' +
+'<style>' +
+'*{margin:0;padding:0;box-sizing:border-box}' +
+'body{font-family:Arial,sans-serif;padding:20px;color:#333}' +
+'.header{display:flex;justify-content:space-between;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #333}' +
+'.company-name{font-size:24px;font-weight:bold;margin-bottom:10px}' +
+'.company-name .highlight{color:#d4af37}' +
+'.company-details{font-size:11px;line-height:1.6;color:#666}' +
+'.logo{width:120px;height:auto}' +
+'.estimate-banner{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:15px 20px;margin-bottom:25px;display:inline-block;font-weight:bold;color:white}' +
+'.info-section{display:flex;justify-content:space-between;margin-bottom:30px}' +
+'.client-info h3{font-size:16px;color:#666;margin-bottom:10px;font-weight:bold}' +
+'.client-info p{font-size:15px;line-height:1.6;font-weight:500}' +
+'.details-table{width:100%;border-collapse:collapse}' +
+'.details-table td{padding:8px 10px;font-size:13px}' +
+'.detail-label{color:#666;width:120px}' +
+'.detail-value{font-weight:bold}' +
+'.expiry-date{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:5px 10px;color:white;font-weight:bold}' +
+'.items-table{width:100%;border-collapse:collapse;margin:30px 0}' +
+'.items-table thead{background:#f5f5f5}' +
+'.items-table th{padding:14px 12px;text-align:left;font-weight:bold;border-bottom:2px solid #ddd}' +
+'.items-table th:nth-child(2),.items-table th:nth-child(3),.items-table th:nth-child(4){text-align:right}' +
+'.items-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f0f0}' +
+'.items-table td:nth-child(2),.items-table td:nth-child(3),.items-table td:nth-child(4){text-align:right}' +
+'.notes-section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:3px solid #bc9c22}' +
+'.notes-section h3{font-size:13px;margin-bottom:10px}' +
+'.notes-section ol{margin-left:20px;font-size:12px;line-height:1.8;color:#666}' +
+'.totals-section-preview{margin-top:30px;display:flex;justify-content:flex-end}' +
+'.totals-box{width:300px}' +
+'.total-row-preview{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px}' +
+'.total-row-preview.subtotal{border-top:1px solid #ddd}' +
+'.total-row-preview.vat{color:#666}' +
+'.total-row-preview.final{background:linear-gradient(135deg,#bc9c22,#d4af37);color:white;font-weight:bold;font-size:16px;margin-top:5px}' +
+'.footer-note{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:11px;color:#666;font-style:italic}' +
+'.thank-you{margin-top:15px;font-weight:bold;color:#333}' +
+'</style></head><body>' +
+'<div class="header">' +
+    '<div class="company-info">' +
+        '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>' +
+        '<div class="company-details">8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>07979309957<br>traderbrotherslimited@gmail.com</div>' +
+    '</div>' +
+    '<div class="logo-container">' +
+        '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo" class="logo">' +
+    '</div>' +
+'</div>' +
+'<div class="estimate-banner">Estimate for</div>' +
+'<div class="info-section">' +
+    '<div class="client-info">' +
+        '<h3>' + data.clientName + '</h3>' +
+        '<p>' + data.projectName + '<br>' + data.projectAddress + (data.clientPhone ? '<br>' + data.clientPhone : '') + '</p>' +
+    '</div>' +
+    '<div class="estimate-details">' +
+        '<table class="details-table">' +
+            '<tr><td class="detail-label">Date:</td><td class="detail-value">' + data.quoteDate + '</td></tr>' +
+            '<tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + data.estNumber + '</td></tr>' +
+            '<tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + data.customerId + '</td></tr>' +
+            '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + data.expiryDate + '</td></tr>' +
+        '</table>' +
+    '</div>' +
+'</div>' +
+'<table class="items-table">' +
+    '<thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>' +
+    '<tbody>' + itemsRows + '</tbody>' +
+'</table>' +
+'<div class="notes-section">' +
+    '<h3>Notes:</h3>' +
+    '<ol>' +
+        '<li>Estimate valid for 31 days</li>' +
+        '<li>Payment of ' + data.depositPercent + '% required to secure start date</li>' +
+        '<li>Pending to be supplied by customer</li>' +
+        '<li>Any extras charged accordingly</li>' +
+        (data.customNotes ? '<li>' + data.customNotes + '</li>' : '') +
+    '</ol>' +
+'</div>' +
+'<div class="totals-section-preview">' +
+    '<div class="totals-box">' +
+        '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + data.subtotal.toFixed(2) + '</span></div>' +
+        '<div class="total-row-preview vat"><span>VAT</span><span>£' + data.vat.toFixed(2) + '</span></div>' +
+        '<div class="total-row-preview final"><span>Total</span><span>£' + data.total.toFixed(2) + '</span></div>' +
+    '</div>' +
+'</div>' +
+'<div class="footer-note">' +
+    'If you have any questions, please contact Trader Brothers on 07448835577' +
+    '<div class="thank-you">Thank you for your business</div>' +
+'</div>' +
+'</body></html>';
 }
 
 async function downloadQuote() {
@@ -466,10 +536,10 @@ async function downloadQuote() {
     }
 
     var data = getQuoteData();
-    var filename = `Estimate_${data.estNumber}_${data.clientName.substring(0,20).replace(/[^a-zA-Z0-9]/g,'_')}.pdf`;
+    var filename = 'Estimate_' + data.estNumber + '_' + data.clientName.substring(0,20).replace(/[^a-zA-Z0-9]/g,'_') + '.pdf';
     
     var downloadBtn = document.querySelector('button:focus') || document.getElementById('downloadBtn');
-    var originalText = downloadBtn?.textContent;
+    var originalText = downloadBtn ? downloadBtn.textContent : '';
     if (downloadBtn) {
         downloadBtn.textContent = 'Generating PDF...';
         downloadBtn.disabled = true;
@@ -491,8 +561,13 @@ async function downloadQuote() {
         });
 
         if (!response.ok) {
-            var errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(errorData.error || errorData.message || `Error ${response.status}`);
+            var errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                errorData = { error: 'Unknown error' };
+            }
+            throw new Error(errorData.error || errorData.message || 'Error ' + response.status);
         }
 
         var blob = await response.blob();
