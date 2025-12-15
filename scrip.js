@@ -1,9 +1,46 @@
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
 var items = [];
 var currentRateType = 'job';
 var estimateNumber = 1;
 
 // PDFShift API Configuration
 const PDFSHIFT_API_KEY = 'sk_baa46c861371ec5f60ab2e83221fdac1ccce517b';
+
+function initializeApp() {
+    // Load estimate counter
+    if (localStorage.getItem('traderBrosEstimateCount')) {
+        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+    }
+    updateEstimateCounter();
+    
+    // Set up event listeners
+    setupEventListeners();
+}
+
+function setupEventListeners() {
+    // Client name input
+    document.getElementById('clientName').addEventListener('input', handleClientNameInput);
+    
+    // Trade category change
+    document.getElementById('tradeCategory').addEventListener('change', handleTradeCategoryChange);
+    
+    // Rate type buttons
+    document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
+        btn.addEventListener('click', handleRateTypeClick);
+    });
+    
+    // Modal close on outside click
+    window.onclick = function(event) {
+        var modal = document.getElementById('previewModal');
+        if (event.target == modal) {
+            closePreview();
+        }
+    };
+}
 
 var tradeRates = {
     'Downtakings': { hourly: 30, daily: 220, job: 0 },
@@ -38,10 +75,13 @@ if (localStorage.getItem('traderBrosEstimateCount')) {
 updateEstimateCounter();
 
 function updateEstimateCounter() {
-    document.getElementById('estimateCounter').textContent = '#' + String(estimateNumber).padStart(4, '0');
+    var counterElement = document.getElementById('estimateCounter');
+    if (counterElement) {
+        counterElement.textContent = '#' + String(estimateNumber).padStart(4, '0');
+    }
 }
 
-document.getElementById('clientName').addEventListener('input', function() {
+function handleClientNameInput() {
     var name = this.value.trim();
     if (name) {
         var parts = name.split(' ');
@@ -62,9 +102,9 @@ document.getElementById('clientName').addEventListener('input', function() {
     } else {
         document.getElementById('customerId').value = '';
     }
-});
+}
 
-document.getElementById('tradeCategory').addEventListener('change', function() {
+function handleTradeCategoryChange() {
     var selectedTrade = this.value;
     var rateInfo = document.getElementById('tradeRateInfo');
     
@@ -89,9 +129,34 @@ document.getElementById('tradeCategory').addEventListener('change', function() {
         rateInfo.textContent = '';
         document.getElementById('unitPrice').value = '';
     }
-});
+}
 
-function updatePriceFromTrade() {
+function handleRateTypeClick() {
+    document.querySelectorAll('.rate-type-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    this.classList.add('active');
+    currentRateType = this.getAttribute('data-type');
+    
+    var customUnitGroup = document.getElementById('customUnitGroup');
+    var rateLabel = document.getElementById('rateLabel');
+    
+    if (currentRateType === 'custom') {
+        customUnitGroup.classList.remove('hidden');
+        rateLabel.textContent = 'Unit Price (£) *';
+    } else if (currentRateType === 'daily') {
+        customUnitGroup.classList.add('hidden');
+        rateLabel.textContent = 'Day Rate (£) *';
+    } else if (currentRateType === 'job') {
+        customUnitGroup.classList.add('hidden');
+        rateLabel.textContent = 'Per Job Rate (£) *';
+    } else {
+        customUnitGroup.classList.add('hidden');
+        rateLabel.textContent = 'Hourly Rate (£) *';
+    }
+    
+    updatePriceFromTrade();
+}
     var selectedTrade = document.getElementById('tradeCategory').value;
     if (selectedTrade && tradeRates[selectedTrade]) {
         var rates = tradeRates[selectedTrade];
@@ -719,11 +784,27 @@ async function downloadQuote() {
     var clientName = document.getElementById('clientName').value || 'Client';
     var estNumber = String(estimateNumber).padStart(4, '0');
     
+    // Find the button that was clicked
+    var downloadBtns = document.querySelectorAll('button');
+    var downloadBtn = null;
+    for (var i = 0; i < downloadBtns.length; i++) {
+        if (downloadBtns[i].textContent.includes('Download PDF') || downloadBtns[i].textContent.includes('Generating PDF')) {
+            downloadBtn = downloadBtns[i];
+            break;
+        }
+    }
+    
+    if (!downloadBtn) {
+        // Fallback if button not found
+        console.log('Download button not found, proceeding anyway');
+    }
+    
     // Show loading state
-    var downloadBtn = event.target;
-    var originalText = downloadBtn.textContent;
-    downloadBtn.textContent = 'Generating PDF...';
-    downloadBtn.disabled = true;
+    var originalText = downloadBtn ? downloadBtn.textContent : '';
+    if (downloadBtn) {
+        downloadBtn.textContent = 'Generating PDF...';
+        downloadBtn.disabled = true;
+    }
 
     try {
         // Get the complete HTML
@@ -832,14 +913,12 @@ async function downloadQuote() {
         }
         alert(errorMessage);
     } finally {
-        downloadBtn.textContent = originalText;
-        downloadBtn.disabled = false;
+        if (downloadBtn) {
+            downloadBtn.textContent = originalText;
+            downloadBtn.disabled = false;
+        }
     }
 }
 
-window.onclick = function(event) {
-    var modal = document.getElementById('previewModal');
-    if (event.target == modal) {
-        closePreview();
-    }
-}
+// Remove old window.onclick and replace with proper initialization
+// (already handled in setupEventListeners)
