@@ -1,7 +1,12 @@
+// PDFShift API Configuration
+const PDFSHIFT_API_KEY = 'sk_baa46c861371ec5f60ab2e83221fdac1ccce517b';
+
+// Global variables
 var items = [];
 var currentRateType = 'job';
 var estimateNumber = 1;
 
+// Trade rates configuration
 var tradeRates = {
     'Downtakings': { hourly: 30, daily: 220, job: 0 },
     'General Building': { hourly: 30, daily: 230, job: 0 },
@@ -29,138 +34,150 @@ var tradeRates = {
     'Materials': { hourly: 0, daily: 0, job: 0 }
 };
 
-if (localStorage.getItem('traderBrosEstimateCount')) {
-    estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+function initializeApp() {
+    var savedCount = localStorage.getItem('traderBrosEstimateCount');
+    if (savedCount) estimateNumber = parseInt(savedCount) + 1;
+    updateEstimateCounter();
+    setupEventListeners();
 }
-updateEstimateCounter();
+
+function setupEventListeners() {
+    // Client name
+    document.getElementById('clientName')?.addEventListener('input', handleClientNameInput);
+    
+    // Trade category
+    document.getElementById('tradeCategory')?.addEventListener('change', handleTradeCategoryChange);
+    
+    // Rate type buttons - FIXED with proper binding
+    document.querySelectorAll('.rate-type-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleRateTypeClick(this);
+        });
+    });
+    
+    // Buttons
+    document.getElementById('addItemBtn')?.addEventListener('click', e => { e.preventDefault(); addItem(); });
+    document.getElementById('previewBtn')?.addEventListener('click', e => { e.preventDefault(); previewQuote(); });
+    document.getElementById('downloadBtn')?.addEventListener('click', e => { e.preventDefault(); downloadQuote(); });
+    document.getElementById('downloadPdfBtn')?.addEventListener('click', e => { e.preventDefault(); downloadQuote(); });
+    document.getElementById('closePreviewBtn')?.addEventListener('click', e => { e.preventDefault(); closePreview(); });
+    document.getElementById('closeModalBtn')?.addEventListener('click', e => { e.preventDefault(); closePreview(); });
+    
+    // Modal close on outside click
+    window.onclick = e => {
+        if (e.target == document.getElementById('previewModal')) closePreview();
+    };
+}
 
 function updateEstimateCounter() {
-    document.getElementById('estimateCounter').textContent = '#' + String(estimateNumber).padStart(4, '0');
+    var elem = document.getElementById('estimateCounter');
+    if (elem) elem.textContent = '#' + String(estimateNumber).padStart(4, '0');
 }
 
-document.getElementById('clientName').addEventListener('input', function() {
+function handleClientNameInput() {
     var name = this.value.trim();
-    if (name) {
-        var parts = name.split(' ');
-        var customerId = '';
-        
-        if (parts.length >= 2) {
-            var firstName = parts[0].substring(0, 3).toUpperCase();
-            var lastName = parts[parts.length - 1].substring(0, 3).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = firstName + lastName + randomNum;
-        } else if (parts.length === 1) {
-            var singleName = parts[0].substring(0, 6).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = singleName + randomNum;
-        }
-        
-        document.getElementById('customerId').value = customerId;
-    } else {
+    if (!name) {
         document.getElementById('customerId').value = '';
+        return;
     }
-});
+    
+    var parts = name.split(' ');
+    var customerId;
+    
+    if (parts.length >= 2) {
+        customerId = parts[0].substring(0, 3).toUpperCase() + 
+                     parts[parts.length - 1].substring(0, 3).toUpperCase() + 
+                     Math.floor(1000 + Math.random() * 9000);
+    } else {
+        customerId = parts[0].substring(0, 6).toUpperCase() + 
+                     Math.floor(1000 + Math.random() * 9000);
+    }
+    
+    document.getElementById('customerId').value = customerId;
+}
 
-document.getElementById('tradeCategory').addEventListener('change', function() {
+function handleTradeCategoryChange() {
     var selectedTrade = this.value;
     var rateInfo = document.getElementById('tradeRateInfo');
     
     if (selectedTrade && tradeRates[selectedTrade]) {
         var rates = tradeRates[selectedTrade];
-        var infoText = 'Standard rates: ';
         var rateParts = [];
         
         if (rates.hourly > 0) rateParts.push('£' + rates.hourly + '/hr');
         if (rates.daily > 0) rateParts.push('£' + rates.daily + '/day');
         if (rates.job > 0) rateParts.push('£' + rates.job + '/job');
         
-        if (rateParts.length > 0) {
-            infoText += rateParts.join(' | ');
-            rateInfo.textContent = infoText;
-        } else {
-            rateInfo.textContent = '';
-        }
-        
+        rateInfo.textContent = rateParts.length > 0 ? 'Standard rates: ' + rateParts.join(' | ') : '';
         updatePriceFromTrade();
     } else {
         rateInfo.textContent = '';
         document.getElementById('unitPrice').value = '';
     }
-});
+}
+
+function handleRateTypeClick(btn) {
+    // Remove active from all, add to clicked
+    document.querySelectorAll('.rate-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    currentRateType = btn.getAttribute('data-type');
+    
+    var customUnitGroup = document.getElementById('customUnitGroup');
+    var rateLabel = document.getElementById('rateLabel');
+    
+    if (currentRateType === 'custom') {
+        customUnitGroup.classList.remove('hidden');
+        rateLabel.textContent = 'Unit Price (£) *';
+    } else {
+        customUnitGroup.classList.add('hidden');
+        rateLabel.textContent = currentRateType === 'daily' ? 'Day Rate (£) *' : 
+                                currentRateType === 'job' ? 'Per Job Rate (£) *' : 
+                                'Hourly Rate (£) *';
+    }
+    
+    updatePriceFromTrade();
+}
 
 function updatePriceFromTrade() {
     var selectedTrade = document.getElementById('tradeCategory').value;
-    if (selectedTrade && tradeRates[selectedTrade]) {
-        var rates = tradeRates[selectedTrade];
-        var price = 0;
-        
-        if (currentRateType === 'hourly' && rates.hourly > 0) {
-            price = rates.hourly;
-        } else if (currentRateType === 'daily' && rates.daily > 0) {
-            price = rates.daily;
-        } else if (currentRateType === 'job' && rates.job > 0) {
-            price = rates.job;
-        }
-        
-        if (price > 0) {
-            document.getElementById('unitPrice').value = price;
-        }
-    }
+    if (!selectedTrade || !tradeRates[selectedTrade]) return;
+    
+    var rates = tradeRates[selectedTrade];
+    var price = rates[currentRateType] || 0;
+    
+    if (price > 0) document.getElementById('unitPrice').value = price;
 }
-
-document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.rate-type-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        this.classList.add('active');
-        currentRateType = this.getAttribute('data-type');
-        
-        var customUnitGroup = document.getElementById('customUnitGroup');
-        var rateLabel = document.getElementById('rateLabel');
-        
-        if (currentRateType === 'custom') {
-            customUnitGroup.classList.remove('hidden');
-            rateLabel.textContent = 'Unit Price (£) *';
-        } else if (currentRateType === 'daily') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Day Rate (£) *';
-        } else if (currentRateType === 'job') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Per Job Rate (£) *';
-        } else {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Hourly Rate (£) *';
-        }
-        
-        updatePriceFromTrade();
-    });
-});
 
 function addItem() {
     var category = document.getElementById('tradeCategory').value || 'General';
-    var description = document.getElementById('description').value;
+    var description = document.getElementById('description').value.trim();
     var quantity = parseFloat(document.getElementById('quantity').value);
     var unitPrice = parseFloat(document.getElementById('unitPrice').value);
     var customUnit = document.getElementById('customUnit').value;
 
-    if (!description || !unitPrice) {
-        alert('Please enter description and unit price');
+    // Validation
+    if (!description) {
+        alert('Please enter a description');
+        return;
+    }
+    if (!unitPrice || unitPrice <= 0) {
+        alert('Please enter a valid unit price');
+        return;
+    }
+    if (!quantity || quantity <= 0) {
+        alert('Please enter a valid quantity');
         return;
     }
 
-    var unit = '';
-    if (currentRateType === 'hourly') {
-        unit = 'hour';
-    } else if (currentRateType === 'daily') {
-        unit = 'day';
-    } else if (currentRateType === 'job') {
-        unit = 'job';
-    } else {
-        unit = customUnit || 'item';
-    }
-
-    var lineTotal = unitPrice * quantity;
+    var unit = currentRateType === 'hourly' ? 'hour' : 
+               currentRateType === 'daily' ? 'day' : 
+               currentRateType === 'job' ? 'job' : 
+               customUnit || 'item';
 
     items.push({
         category: category,
@@ -168,22 +185,27 @@ function addItem() {
         quantity: quantity,
         unit: unit,
         unitPrice: unitPrice,
-        lineTotal: lineTotal
+        lineTotal: unitPrice * quantity
     });
 
     updateQuoteTable();
     
+    // Clear form
     document.getElementById('description').value = '';
     document.getElementById('quantity').value = '1';
     document.getElementById('unitPrice').value = '';
     document.getElementById('customUnit').value = '';
     document.getElementById('tradeCategory').selectedIndex = 0;
     document.getElementById('tradeRateInfo').textContent = '';
+    
+    alert('Item added successfully!');
 }
 
 function removeItem(index) {
-    items.splice(index, 1);
-    updateQuoteTable();
+    if (confirm('Remove this item?')) {
+        items.splice(index, 1);
+        updateQuoteTable();
+    }
 }
 
 function updateQuoteTable() {
@@ -200,154 +222,48 @@ function updateQuoteTable() {
     quoteSection.style.display = 'block';
     generateSection.style.display = 'block';
 
-    var html = '';
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        html += '<tr>';
-        html += '<td>' + item.category + '</td>';
-        html += '<td>' + item.description + '</td>';
-        html += '<td class="text-center">' + item.quantity + '</td>';
-        html += '<td class="text-right">£' + item.unitPrice.toFixed(2) + '</td>';
-        html += '<td class="text-right" style="font-weight: 600;">£' + item.lineTotal.toFixed(2) + '</td>';
-        html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + ')">Delete</button></td>';
-        html += '</tr>';
-    }
-
-    var subtotal = 0;
-    for (var j = 0; j < items.length; j++) {
-        subtotal += items[j].lineTotal;
-    }
-
+    var subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
     var vat = subtotal * 0.20;
     var total = subtotal + vat;
     
-    html += '<tr class="total-row">';
-    html += '<td colspan="4" class="text-right">Subtotal:</td>';
-    html += '<td class="text-right">£' + subtotal.toFixed(2) + '</td>';
-    html += '<td></td>';
-    html += '</tr>';
-    html += '<tr class="total-row">';
-    html += '<td colspan="4" class="text-right">VAT (20%):</td>';
-    html += '<td class="text-right">£' + vat.toFixed(2) + '</td>';
-    html += '<td></td>';
-    html += '</tr>';
-    html += '<tr class="total-row">';
-    html += '<td colspan="4" class="text-right" style="font-size: 16px;"><strong>TOTAL:</strong></td>';
-    html += '<td class="text-right" style="font-size: 16px;"><strong>£' + total.toFixed(2) + '</strong></td>';
-    html += '<td></td>';
-    html += '</tr>';
+    var html = items.map((item, i) => `
+        <tr>
+            <td>${item.category}</td>
+            <td>${item.description}</td>
+            <td class="text-center">${item.quantity}</td>
+            <td class="text-right">£${item.unitPrice.toFixed(2)}</td>
+            <td class="text-right" style="font-weight: 600;">£${item.lineTotal.toFixed(2)}</td>
+            <td class="text-center"><button class="btn-delete" onclick="removeItem(${i}); return false;">Delete</button></td>
+        </tr>
+    `).join('') + `
+        <tr class="total-row">
+            <td colspan="4" class="text-right">Subtotal:</td>
+            <td class="text-right">£${subtotal.toFixed(2)}</td>
+            <td></td>
+        </tr>
+        <tr class="total-row">
+            <td colspan="4" class="text-right">VAT (20%):</td>
+            <td class="text-right">£${vat.toFixed(2)}</td>
+            <td></td>
+        </tr>
+        <tr class="total-row">
+            <td colspan="4" class="text-right" style="font-size: 16px;"><strong>TOTAL:</strong></td>
+            <td class="text-right" style="font-size: 16px;"><strong>£${total.toFixed(2)}</strong></td>
+            <td></td>
+        </tr>
+    `;
 
     tbody.innerHTML = html;
 }
 
 function previewQuote() {
-    var clientName = document.getElementById('clientName').value || '[Client Name]';
-    var clientPhone = document.getElementById('clientPhone').value;
-    var projectAddress = document.getElementById('projectAddress').value || '[Project Address]';
-    var customerId = document.getElementById('customerId').value || 'N/A';
-    var depositPercent = document.getElementById('depositPercent').value || '30';
-    
-    var today = new Date();
-    var quoteDate = today.toLocaleDateString('en-GB');
-    var expiryDate = new Date(today.getTime() + 31 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB');
-    var estNumber = String(estimateNumber).padStart(4, '0');
-    
-    var subtotal = 0;
-    for (var j = 0; j < items.length; j++) {
-        subtotal += items[j].lineTotal;
+    if (items.length === 0) {
+        alert('Please add items before previewing');
+        return;
     }
-    var vat = subtotal * 0.20;
-    var total = subtotal + vat;
-
-    var previewHtml = '<div class="estimate-container">';
     
-    // Header matching template
-    previewHtml += '<div class="preview-header">';
-    previewHtml += '<div class="company-info">';
-    previewHtml += '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>';
-    previewHtml += '<div class="company-details">';
-    previewHtml += '8 Craigour Terrace<br>';
-    previewHtml += 'Edinburgh, EH17 7PB<br>';
-    previewHtml += '07979309957<br>';
-    previewHtml += 'traderbrotherslimited@gmail.com';
-    previewHtml += '</div></div>';
-    previewHtml += '<div class="logo-container">';
-    previewHtml += '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo">';
-    previewHtml += '</div></div>';
-
-    // Estimate banner
-    previewHtml += '<div class="estimate-banner">Estimate for</div>';
-
-    // Info section
-    previewHtml += '<div class="info-section">';
-    previewHtml += '<div class="client-info">';
-    previewHtml += '<h3>' + clientName + '</h3>';
-    previewHtml += '<p>';
-    previewHtml += projectAddress;
-    if (clientPhone) previewHtml += '<br>' + clientPhone;
-    previewHtml += '</p></div>';
-    
-    previewHtml += '<div class="estimate-details">';
-    previewHtml += '<table class="details-table">';
-    previewHtml += '<tr><td class="detail-label">Date:</td><td class="detail-value">' + quoteDate + '</td></tr>';
-    previewHtml += '<tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + estNumber + '</td></tr>';
-    previewHtml += '<tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + customerId + '</td></tr>';
-    previewHtml += '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr>';
-    previewHtml += '</table></div></div>';
-
-    // Items table
-    previewHtml += '<table class="items-table">';
-    previewHtml += '<thead><tr>';
-    previewHtml += '<th>Description</th>';
-    previewHtml += '<th>Qty</th>';
-    previewHtml += '<th>Unit price</th>';
-    previewHtml += '<th>Total price</th>';
-    previewHtml += '</tr></thead><tbody>';
-
-    for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        previewHtml += '<tr>';
-        previewHtml += '<td>' + item.description + '</td>';
-        previewHtml += '<td>' + item.quantity + '</td>';
-        previewHtml += '<td>£' + item.unitPrice.toFixed(2) + '</td>';
-        previewHtml += '<td>£' + item.lineTotal.toFixed(2) + '</td>';
-        previewHtml += '</tr>';
-    }
-
-    previewHtml += '</tbody></table>';
-
-    // Notes section
-    previewHtml += '<div class="notes-section">';
-    previewHtml += '<h3>Notes:</h3>';
-    previewHtml += '<ol>';
-    previewHtml += '<li>Estimate valid for 31 days</li>';
-    previewHtml += '<li>Payment of ' + depositPercent + '% is required to secure start date</li>';
-    previewHtml += '<li>Pending to be supplied by customer</li>';
-    previewHtml += '<li>Any extras to be charged accordingly</li>';
-    var customNotes = document.getElementById('customNotes').value;
-    if (customNotes) {
-        previewHtml += '<li>' + customNotes + '</li>';
-    }
-    previewHtml += '</ol></div>';
-
-    // Totals section
-    previewHtml += '<div class="totals-section">';
-    previewHtml += '<div class="totals-box">';
-    previewHtml += '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div>';
-    previewHtml += '<div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div>';
-    previewHtml += '<div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div>';
-    previewHtml += '</div></div>';
-
-    // Footer note
-    previewHtml += '<div class="footer-note">';
-    previewHtml += 'If you have any questions about this estimate, please contact<br>';
-    previewHtml += 'Trader Brothers on 07448835577';
-    previewHtml += '<div class="thank-you">Thank you for your business</div>';
-    previewHtml += '</div>';
-
-    previewHtml += '</div>';
-
-    document.getElementById('previewBody').innerHTML = previewHtml;
+    var data = getQuoteData();
+    document.getElementById('previewBody').innerHTML = generatePreviewHTML(data);
     document.getElementById('previewModal').style.display = 'block';
 }
 
@@ -355,9 +271,254 @@ function closePreview() {
     document.getElementById('previewModal').style.display = 'none';
 }
 
-window.onclick = function(event) {
-    var modal = document.getElementById('previewModal');
-    if (event.target == modal) {
+function getQuoteData() {
+    var subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    return {
+        clientName: document.getElementById('clientName').value || '[Client Name]',
+        clientPhone: document.getElementById('clientPhone').value,
+        projectName: document.getElementById('projectName').value || '[Project Name]',
+        projectAddress: document.getElementById('projectAddress').value || '[Project Address]',
+        customerId: document.getElementById('customerId').value || 'N/A',
+        depositPercent: document.getElementById('depositPercent').value || '30',
+        quoteDate: new Date().toLocaleDateString('en-GB'),
+        expiryDate: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+        estNumber: String(estimateNumber).padStart(4, '0'),
+        subtotal: subtotal,
+        vat: subtotal * 0.20,
+        total: subtotal * 1.20,
+        customNotes: document.getElementById('customNotes').value
+    };
+}
+
+function generatePreviewHTML(data) {
+    var itemsHTML = items.map(item => `
+        <tr>
+            <td>${item.description}</td>
+            <td>${item.quantity}</td>
+            <td>£${item.unitPrice.toFixed(2)}</td>
+            <td>£${item.lineTotal.toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="estimate-container">
+            <div class="preview-header">
+                <div class="company-info">
+                    <div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>
+                    <div class="company-details">
+                        8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>
+                        07979309957<br>traderbrotherslimited@gmail.com
+                    </div>
+                </div>
+                <div class="logo-container">
+                    <img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo">
+                </div>
+            </div>
+            <div class="estimate-banner">Estimate for</div>
+            <div class="info-section">
+                <div class="client-info">
+                    <h3>${data.clientName}</h3>
+                    <p>${data.projectName}<br>${data.projectAddress}${data.clientPhone ? '<br>' + data.clientPhone : ''}</p>
+                </div>
+                <div class="estimate-details">
+                    <table class="details-table">
+                        <tr><td class="detail-label">Date:</td><td class="detail-value">${data.quoteDate}</td></tr>
+                        <tr><td class="detail-label">Estimate #:</td><td class="detail-value">${data.estNumber}</td></tr>
+                        <tr><td class="detail-label">Customer Ref:</td><td class="detail-value">${data.customerId}</td></tr>
+                        <tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">${data.expiryDate}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <table class="items-table">
+                <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>
+                <tbody>${itemsHTML}</tbody>
+            </table>
+            <div class="notes-section">
+                <h3>Notes:</h3>
+                <ol>
+                    <li>Estimate valid for 31 days</li>
+                    <li>Payment of ${data.depositPercent}% required to secure start date</li>
+                    <li>Pending to be supplied by customer</li>
+                    <li>Any extras charged accordingly</li>
+                    ${data.customNotes ? '<li>' + data.customNotes + '</li>' : ''}
+                </ol>
+            </div>
+            <div class="totals-section-preview">
+                <div class="totals-box">
+                    <div class="total-row-preview subtotal"><span>Subtotal</span><span>£${data.subtotal.toFixed(2)}</span></div>
+                    <div class="total-row-preview vat"><span>VAT</span><span>£${data.vat.toFixed(2)}</span></div>
+                    <div class="total-row-preview final"><span>Total</span><span>£${data.total.toFixed(2)}</span></div>
+                </div>
+            </div>
+            <div class="footer-note">
+                If you have any questions about this estimate, please contact<br>
+                Trader Brothers on 07448835577
+                <div class="thank-you">Thank you for your business</div>
+            </div>
+        </div>
+    `;
+}
+
+function generateCompleteHTML() {
+    var data = getQuoteData();
+    var itemsRows = items.map(item => `
+        <tr>
+            <td>${item.description}</td>
+            <td>${item.quantity}</td>
+            <td>£${item.unitPrice.toFixed(2)}</td>
+            <td>£${item.lineTotal.toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Estimate - ${data.clientName}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;padding:20px;color:#333}
+.header{display:flex;justify-content:space-between;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #333}
+.company-name{font-size:24px;font-weight:bold;margin-bottom:10px}
+.company-name .highlight{color:#d4af37}
+.company-details{font-size:11px;line-height:1.6;color:#666}
+.logo{width:120px;height:auto}
+.estimate-banner{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:15px 20px;margin-bottom:25px;display:inline-block;font-weight:bold;color:white}
+.info-section{display:flex;justify-content:space-between;margin-bottom:30px}
+.client-info h3{font-size:16px;color:#666;margin-bottom:10px;font-weight:bold}
+.client-info p{font-size:15px;line-height:1.6;font-weight:500}
+.details-table{width:100%;border-collapse:collapse}
+.details-table td{padding:8px 10px;font-size:13px}
+.detail-label{color:#666;width:120px}
+.detail-value{font-weight:bold}
+.expiry-date{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:5px 10px;color:white;font-weight:bold}
+.items-table{width:100%;border-collapse:collapse;margin:30px 0}
+.items-table thead{background:#f5f5f5}
+.items-table th{padding:14px 12px;text-align:left;font-weight:bold;border-bottom:2px solid #ddd}
+.items-table th:nth-child(2),.items-table th:nth-child(3),.items-table th:nth-child(4){text-align:right}
+.items-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f0f0}
+.items-table td:nth-child(2),.items-table td:nth-child(3),.items-table td:nth-child(4){text-align:right}
+.notes-section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:3px solid #bc9c22}
+.notes-section h3{font-size:13px;margin-bottom:10px}
+.notes-section ol{margin-left:20px;font-size:12px;line-height:1.8;color:#666}
+.totals-section-preview{margin-top:30px;display:flex;justify-content:flex-end}
+.totals-box{width:300px}
+.total-row-preview{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px}
+.total-row-preview.subtotal{border-top:1px solid #ddd}
+.total-row-preview.vat{color:#666}
+.total-row-preview.final{background:linear-gradient(135deg,#bc9c22,#d4af37);color:white;font-weight:bold;font-size:16px;margin-top:5px}
+.footer-note{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:11px;color:#666;font-style:italic}
+.thank-you{margin-top:15px;font-weight:bold;color:#333}
+</style></head><body>
+<div class="header">
+    <div class="company-info">
+        <div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>
+        <div class="company-details">8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>07979309957<br>traderbrotherslimited@gmail.com</div>
+    </div>
+    <div class="logo-container">
+        <img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo" class="logo">
+    </div>
+</div>
+<div class="estimate-banner">Estimate for</div>
+<div class="info-section">
+    <div class="client-info">
+        <h3>${data.clientName}</h3>
+        <p>${data.projectName}<br>${data.projectAddress}${data.clientPhone ? '<br>' + data.clientPhone : ''}</p>
+    </div>
+    <div class="estimate-details">
+        <table class="details-table">
+            <tr><td class="detail-label">Date:</td><td class="detail-value">${data.quoteDate}</td></tr>
+            <tr><td class="detail-label">Estimate #:</td><td class="detail-value">${data.estNumber}</td></tr>
+            <tr><td class="detail-label">Customer Ref:</td><td class="detail-value">${data.customerId}</td></tr>
+            <tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">${data.expiryDate}</td></tr>
+        </table>
+    </div>
+</div>
+<table class="items-table">
+    <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>
+    <tbody>${itemsRows}</tbody>
+</table>
+<div class="notes-section">
+    <h3>Notes:</h3>
+    <ol>
+        <li>Estimate valid for 31 days</li>
+        <li>Payment of ${data.depositPercent}% required to secure start date</li>
+        <li>Pending to be supplied by customer</li>
+        <li>Any extras charged accordingly</li>
+        ${data.customNotes ? '<li>' + data.customNotes + '</li>' : ''}
+    </ol>
+</div>
+<div class="totals-section-preview">
+    <div class="totals-box">
+        <div class="total-row-preview subtotal"><span>Subtotal</span><span>£${data.subtotal.toFixed(2)}</span></div>
+        <div class="total-row-preview vat"><span>VAT</span><span>£${data.vat.toFixed(2)}</span></div>
+        <div class="total-row-preview final"><span>Total</span><span>£${data.total.toFixed(2)}</span></div>
+    </div>
+</div>
+<div class="footer-note">
+    If you have any questions, please contact Trader Brothers on 07448835577
+    <div class="thank-you">Thank you for your business</div>
+</div>
+</body></html>`;
+}
+
+async function downloadQuote() {
+    if (items.length === 0) {
+        alert('Please add items before generating PDF');
+        return;
+    }
+
+    var data = getQuoteData();
+    var filename = `Estimate_${data.estNumber}_${data.clientName.substring(0,20).replace(/[^a-zA-Z0-9]/g,'_')}.pdf`;
+    
+    var downloadBtn = document.querySelector('button:focus') || document.getElementById('downloadBtn');
+    var originalText = downloadBtn?.textContent;
+    if (downloadBtn) {
+        downloadBtn.textContent = 'Generating PDF...';
+        downloadBtn.disabled = true;
+    }
+
+    try {
+        var response = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa('api:' + PDFSHIFT_API_KEY),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                source: generateCompleteHTML(),
+                landscape: false,
+                use_print: true,
+                margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+            })
+        });
+
+        if (!response.ok) {
+            var errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || errorData.message || `Error ${response.status}`);
+        }
+
+        var blob = await response.blob();
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        localStorage.setItem('traderBrosEstimateCount', estimateNumber);
+        estimateNumber++;
+        updateEstimateCounter();
+        
+        alert('✓ PDF downloaded successfully!\n\nFile: ' + filename);
         closePreview();
+
+    } catch (error) {
+        console.error('PDF Error:', error);
+        alert('Error generating PDF:\n\n' + error.message);
+    } finally {
+        if (downloadBtn) {
+            downloadBtn.textContent = originalText;
+            downloadBtn.disabled = false;
+        }
     }
 }
