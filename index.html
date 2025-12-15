@@ -313,7 +313,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="addItem(); return false;">Add Item to Quote</button>
+            <button type="button" class="btn btn-primary" onclick="addItem(); return false;">Add Item to Quote</button>
         </div>
 
         <div class="section" id="quoteSection" style="display: none;">
@@ -344,8 +344,8 @@
         </div>
 
         <div id="generateSection" style="display: none; margin-top: 20px; text-align: center;">
-            <button class="btn btn-success" onclick="previewQuote(); return false;">Preview Quote</button>
-            <button class="btn btn-secondary" onclick="downloadQuote(); return false;">Download PDF</button>
+            <button type="button" class="btn btn-success" onclick="previewQuote(); return false;">Preview Quote</button>
+            <button type="button" class="btn btn-secondary" onclick="downloadQuote(); return false;">Download PDF</button>
         </div>
     </div>
 
@@ -359,8 +359,8 @@
             <div class="modal-body" id="previewBody">
             </div>
             <div class="modal-footer">
-                <button class="btn btn-success" onclick="downloadQuote(); return false;">Download PDF</button>
-                <button class="btn btn-secondary" onclick="closePreview(); return false;">Close</button>
+                <button type="button" class="btn btn-success" onclick="downloadQuote(); return false;">Download PDF</button>
+                <button type="button" class="btn btn-secondary" onclick="closePreview(); return false;">Close</button>
             </div>
         </div>
     </div>
