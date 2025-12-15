@@ -313,7 +313,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="addItem()">Add Item to Quote</button>
+            <button class="btn btn-primary" onclick="addItem(); return false;">Add Item to Quote</button>
         </div>
 
         <div class="section" id="quoteSection" style="display: none;">
@@ -344,8 +344,8 @@
         </div>
 
         <div id="generateSection" style="display: none; margin-top: 20px; text-align: center;">
-            <button class="btn btn-success" onclick="previewQuote()">Preview Quote</button>
-            <button class="btn btn-secondary" onclick="downloadQuote()">Download PDF</button>
+            <button class="btn btn-success" onclick="previewQuote(); return false;">Preview Quote</button>
+            <button class="btn btn-secondary" onclick="downloadQuote(); return false;">Download PDF</button>
         </div>
     </div>
 
@@ -353,14 +353,14 @@
     <div id="previewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="close" onclick="closePreview()">&times;</span>
+                <span class="close" onclick="closePreview(); return false;">&times;</span>
                 <h2>Quote Preview</h2>
             </div>
             <div class="modal-body" id="previewBody">
             </div>
             <div class="modal-footer">
-                <button class="btn btn-success" onclick="downloadQuote()">Download PDF</button>
-                <button class="btn btn-secondary" onclick="closePreview()">Close</button>
+                <button class="btn btn-success" onclick="downloadQuote(); return false;">Download PDF</button>
+                <button class="btn btn-secondary" onclick="closePreview(); return false;">Close</button>
             </div>
         </div>
     </div>
