@@ -2,6 +2,9 @@ var items = [];
 var currentRateType = 'job';
 var estimateNumber = 1;
 
+// PDFShift API Configuration
+const PDFSHIFT_API_KEY = 'sk_baa46c861371ec5f60ab2e83221fdac1ccce517b';
+
 var tradeRates = {
     'Downtakings': { hourly: 30, daily: 220, job: 0 },
     'General Building': { hourly: 30, daily: 230, job: 0 },
@@ -262,7 +265,6 @@ function previewQuote() {
 
     var previewHtml = '<div class="estimate-container">';
     
-    // Header matching template
     previewHtml += '<div class="preview-header">';
     previewHtml += '<div class="company-info">';
     previewHtml += '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>';
@@ -276,10 +278,8 @@ function previewQuote() {
     previewHtml += '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo">';
     previewHtml += '</div></div>';
 
-    // Estimate banner
     previewHtml += '<div class="estimate-banner">Estimate for</div>';
 
-    // Info section
     previewHtml += '<div class="info-section">';
     previewHtml += '<div class="client-info">';
     previewHtml += '<h3>' + clientName + '</h3>';
@@ -297,7 +297,6 @@ function previewQuote() {
     previewHtml += '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr>';
     previewHtml += '</table></div></div>';
 
-    // Items table
     previewHtml += '<table class="items-table">';
     previewHtml += '<thead><tr>';
     previewHtml += '<th>Description</th>';
@@ -318,7 +317,6 @@ function previewQuote() {
 
     previewHtml += '</tbody></table>';
 
-    // Notes section
     previewHtml += '<div class="notes-section">';
     previewHtml += '<h3>Notes:</h3>';
     previewHtml += '<ol>';
@@ -332,15 +330,13 @@ function previewQuote() {
     }
     previewHtml += '</ol></div>';
 
-    // Totals section
-    previewHtml += '<div class="totals-section">';
+    previewHtml += '<div class="totals-section-preview">';
     previewHtml += '<div class="totals-box">';
     previewHtml += '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div>';
     previewHtml += '<div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div>';
     previewHtml += '<div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div>';
     previewHtml += '</div></div>';
 
-    // Footer note
     previewHtml += '<div class="footer-note">';
     previewHtml += 'If you have any questions about this estimate, please contact<br>';
     previewHtml += 'Trader Brothers on 07448835577';
@@ -357,11 +353,12 @@ function closePreview() {
     document.getElementById('previewModal').style.display = 'none';
 }
 
-function downloadQuote() {
+// Generate complete HTML with embedded styles for PDFShift
+function generateCompleteHTML() {
     var clientName = document.getElementById('clientName').value || '[Client Name]';
     var clientPhone = document.getElementById('clientPhone').value;
-    var projectAddress = document.getElementById('projectAddress').value || '[Project Address]';
     var projectName = document.getElementById('projectName').value || '[Project Name]';
+    var projectAddress = document.getElementById('projectAddress').value || '[Project Address]';
     var customerId = document.getElementById('customerId').value || 'N/A';
     var depositPercent = document.getElementById('depositPercent').value || '30';
     
@@ -376,245 +373,468 @@ function downloadQuote() {
     }
     var vat = subtotal * 0.20;
     var total = subtotal + vat;
-    
-    var { jsPDF } = window.jspdf;
-    var doc = new jsPDF();
-    
-    // Colors
-    var goldColor = [188, 156, 34];
-    var darkGray = [51, 51, 51];
-    var mediumGray = [102, 102, 102];
-    var lightGray = [245, 245, 245];
-    
-    // Header - Company name
-    doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text('TRADER BROTHERS LTD', 15, 20);
-    
-    // Company details
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.text('8 Craigour Terrace', 15, 27);
-    doc.text('Edinburgh, EH17 7PB', 15, 31);
-    doc.text('07979309957', 15, 35);
-    doc.text('traderbrotherslimited@gmail.com', 15, 39);
-    
-    // Logo placeholder on right (gold box)
-    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
-    doc.rect(170, 10, 25, 25, 'F');
-    
-    // Line under header
-    doc.setDrawColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setLineWidth(0.5);
-    doc.line(15, 45, 195, 45);
-    
-    // Estimate banner
-    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
-    doc.rect(15, 52, 50, 8, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
-    doc.text('Estimate for', 18, 57.5);
-    
-    // Client info
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
-    doc.text(clientName, 15, 68);
-    
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setFontSize(9);
-    var yPos = 73;
-    doc.text(projectName, 15, yPos);
-    yPos += 4;
-    var addressLines = doc.splitTextToSize(projectAddress, 70);
-    doc.text(addressLines, 15, yPos);
-    yPos += (addressLines.length * 4);
-    if (clientPhone) {
-        doc.text(clientPhone, 15, yPos);
-    }
-    
-    // Estimate details table on right
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    var rightY = 68;
-    var labelX = 130;
-    var valueX = 193;
-    
-    doc.text('Date:', labelX, rightY);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text(quoteDate, valueX, rightY, { align: 'right' });
-    
-    rightY += 5;
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.text('Estimate #:', labelX, rightY);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text(estNumber, valueX, rightY, { align: 'right' });
-    
-    rightY += 5;
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.text('Customer Ref:', labelX, rightY);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.text(customerId, valueX, rightY, { align: 'right' });
-    
-    rightY += 5;
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.text('Expiry Date:', labelX, rightY);
-    // Gold box for expiry date
-    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
-    var expiryBoxWidth = doc.getTextWidth(expiryDate) + 6;
-    doc.rect(valueX - expiryBoxWidth, rightY - 3.5, expiryBoxWidth, 5.5, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(undefined, 'bold');
-    doc.text(expiryDate, valueX - 3, rightY, { align: 'right' });
-    
-    // Items table
-    yPos = Math.max(yPos, rightY) + 15;
-    
-    // Table header
-    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.rect(15, yPos - 4, 180, 7, 'F');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text('Description', 17, yPos);
-    doc.text('Qty', 140, yPos, { align: 'right' });
-    doc.text('Unit price', 165, yPos, { align: 'right' });
-    doc.text('Total price', 193, yPos, { align: 'right' });
-    
-    // Bottom border of header
-    doc.setDrawColor(221, 221, 221);
-    doc.setLineWidth(0.5);
-    doc.line(15, yPos + 2, 195, yPos + 2);
-    
-    yPos += 8;
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    
-    // Table items
+
+    // Build items table rows
+    var itemsRows = '';
     for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        
-        if (yPos > 260) {
-            doc.addPage();
-            yPos = 20;
-        }
-        
-        var descLines = doc.splitTextToSize(item.description, 115);
-        doc.text(descLines, 17, yPos);
-        doc.text(String(item.quantity), 140, yPos, { align: 'right' });
-        doc.text('£' + item.unitPrice.toFixed(2), 165, yPos, { align: 'right' });
-        doc.text('£' + item.lineTotal.toFixed(2), 193, yPos, { align: 'right' });
-        yPos += (descLines.length * 4) + 2;
-        
-        // Line separator
-        doc.setDrawColor(238, 238, 238);
-        doc.setLineWidth(0.1);
-        doc.line(15, yPos - 1, 195, yPos - 1);
+        itemsRows += '<tr>';
+        itemsRows += '<td>' + item.description + '</td>';
+        itemsRows += '<td>' + item.quantity + '</td>';
+        itemsRows += '<td>£' + item.unitPrice.toFixed(2) + '</td>';
+        itemsRows += '<td>£' + item.lineTotal.toFixed(2) + '</td>';
+        itemsRows += '</tr>';
     }
-    
-    yPos += 10;
-    if (yPos > 230) {
-        doc.addPage();
-        yPos = 20;
-    }
-    
-    // Notes section
-    doc.setFillColor(249, 249, 249);
-    doc.rect(15, yPos, 180, 35, 'F');
-    doc.setDrawColor(goldColor[0], goldColor[1], goldColor[2]);
-    doc.setLineWidth(2);
-    doc.line(15, yPos, 15, yPos + 35);
-    
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9);
-    doc.text('Notes:', 20, yPos + 6);
-    
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.setFontSize(8);
-    var notesY = yPos + 12;
-    doc.text('1. Estimate valid for 31 days', 23, notesY);
-    notesY += 4.5;
-    doc.text('2. Payment of ' + depositPercent + '% is required to secure start date', 23, notesY);
-    notesY += 4.5;
-    doc.text('3. Pending to be supplied by customer', 23, notesY);
-    notesY += 4.5;
-    doc.text('4. Any extras to be charged accordingly', 23, notesY);
-    
+
     var customNotes = document.getElementById('customNotes').value;
+    var notesHtml = '';
     if (customNotes) {
-        notesY += 4.5;
-        var noteLines = doc.splitTextToSize('5. ' + customNotes, 165);
-        doc.text(noteLines, 23, notesY);
+        notesHtml = '<li>' + customNotes + '</li>';
     }
+
+    var styles = `
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background: white;
+        padding: 20px;
+        color: #333;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #333;
+      }
+      .company-info {
+        flex: 1;
+      }
+      .company-name {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .company-name .highlight {
+        color: #d4af37;
+      }
+      .company-details {
+        font-size: 11px;
+        line-height: 1.6;
+        color: #666;
+      }
+      .logo-container {
+        flex-shrink: 0;
+      }
+      .logo {
+        width: 120px;
+        height: auto;
+        display: block;
+      }
+      .estimate-banner {
+        background: linear-gradient(135deg, #bc9c22, #d4af37);
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        display: inline-block;
+        font-weight: bold;
+        font-size: 16px;
+        color: white;
+      }
+      .info-section {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+      }
+      .client-info {
+        flex: 1;
+      }
+      .client-info h3 {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      .client-info p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #333;
+        font-weight: 500;
+      }
+      .estimate-details {
+        flex: 0 0 250px;
+      }
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .details-table td {
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      .detail-label {
+        color: #666;
+        text-align: left;
+        width: 120px;
+      }
+      .detail-value {
+        font-weight: bold;
+        color: #333;
+        text-align: left;
+      }
+      .expiry-date {
+        background: linear-gradient(135deg, #bc9c22, #d4af37);
+        padding: 5px 10px;
+        display: inline-block;
+        color: white;
+        font-weight: bold;
+      }
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px 0;
+      }
+      .items-table thead {
+        background: #f5f5f5;
+      }
+      .items-table th {
+        padding: 14px 12px;
+        text-align: left;
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        border-bottom: 2px solid #ddd;
+      }
+      .items-table th:nth-child(2),
+      .items-table th:nth-child(3),
+      .items-table th:nth-child(4) {
+        text-align: right;
+        width: 100px;
+      }
+      .items-table td {
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: normal;
+        border-bottom: 1px solid #f0f0f0;
+        color: #555;
+      }
+      .items-table td:nth-child(2),
+      .items-table td:nth-child(3),
+      .items-table td:nth-child(4) {
+        text-align: right;
+      }
+      .notes-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-left: 3px solid #bc9c22;
+      }
+      .notes-section h3 {
+        font-size: 13px;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .notes-section ol {
+        margin-left: 20px;
+        font-size: 12px;
+        line-height: 1.8;
+        color: #666;
+      }
+      .totals-section-preview {
+        margin-top: 30px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .totals-box {
+        width: 300px;
+      }
+      .total-row-preview {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+      .total-row-preview.subtotal {
+        border-top: 1px solid #ddd;
+      }
+      .total-row-preview.vat {
+        color: #666;
+      }
+      .total-row-preview.final {
+        background: linear-gradient(135deg, #bc9c22, #d4af37);
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        border-top: 2px solid #333;
+        margin-top: 5px;
+      }
+      .footer-note {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        font-size: 11px;
+        color: #666;
+        font-style: italic;
+      }
+      .thank-you {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #333;
+        font-size: 12px;
+      }
+      @media print {
+        body {
+          padding: 0;
+        }
+      }
+    </style>
+  `;
+
+    var html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estimate - ${clientName}</title>
+  ${styles}
+</head>
+<body>
+  <div class="estimate-container">
+    <div class="header">
+      <div class="company-info">
+        <div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>
+        <div class="company-details">
+          8 Craigour Terrace<br>
+          Edinburgh, EH17 7PB<br>
+          07979309957<br>
+          traderbrotherslimited@gmail.com
+        </div>
+      </div>
+      <div class="logo-container">
+        <img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo" class="logo">
+      </div>
+    </div>
+
+    <div class="estimate-banner">Estimate for</div>
+
+    <div class="info-section">
+      <div class="client-info">
+        <h3>${clientName}</h3>
+        <p>
+          ${projectName}<br>
+          ${projectAddress}${clientPhone ? '<br>' + clientPhone : ''}
+        </p>
+      </div>
+
+      <div class="estimate-details">
+        <table class="details-table">
+          <tr>
+            <td class="detail-label">Date:</td>
+            <td class="detail-value">${quoteDate}</td>
+          </tr>
+          <tr>
+            <td class="detail-label">Estimate #:</td>
+            <td class="detail-value">${estNumber}</td>
+          </tr>
+          <tr>
+            <td class="detail-label">Customer Ref:</td>
+            <td class="detail-value">${customerId}</td>
+          </tr>
+          <tr>
+            <td class="detail-label">Expiry Date:</td>
+            <td class="expiry-date">${expiryDate}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Unit price</th>
+          <th>Total price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    <div class="notes-section">
+      <h3>Notes:</h3>
+      <ol>
+        <li>Estimate valid for 31 days</li>
+        <li>Payment of ${depositPercent}% is required to secure start date</li>
+        <li>Pending to be supplied by customer</li>
+        <li>Any extras to be charged accordingly</li>
+        ${notesHtml}
+      </ol>
+    </div>
+
+    <div class="totals-section-preview">
+      <div class="totals-box">
+        <div class="total-row-preview subtotal">
+          <span>Subtotal</span>
+          <span>£${subtotal.toFixed(2)}</span>
+        </div>
+        <div class="total-row-preview vat">
+          <span>VAT</span>
+          <span>£${vat.toFixed(2)}</span>
+        </div>
+        <div class="total-row-preview final">
+          <span>Total</span>
+          <span>£${total.toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      If you have any questions about this estimate, please contact<br>
+      Trader Brothers on 07448835577
+      <div class="thank-you">Thank you for your business</div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return html;
+}
+
+// PDFShift download function
+async function downloadQuote() {
+    if (items.length === 0) {
+        alert('Please add items to the quote before generating PDF');
+        return;
+    }
+
+    var clientName = document.getElementById('clientName').value || 'Client';
+    var estNumber = String(estimateNumber).padStart(4, '0');
     
-    yPos += 45;
-    
-    // Totals section
-    var totalsX = 130;
-    var totalsValueX = 193;
-    
-    // Subtotal
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
-    doc.setDrawColor(221, 221, 221);
-    doc.setLineWidth(0.3);
-    doc.line(totalsX, yPos, 195, yPos);
-    yPos += 5;
-    
-    doc.text('Subtotal', totalsX, yPos);
-    doc.text('£' + subtotal.toFixed(2), totalsValueX, yPos, { align: 'right' });
-    yPos += 5;
-    
-    // VAT
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.text('VAT', totalsX, yPos);
-    doc.text('£' + vat.toFixed(2), totalsValueX, yPos, { align: 'right' });
-    yPos += 7;
-    
-    // Final total with gold background
-    doc.setFillColor(goldColor[0], goldColor[1], goldColor[2]);
-    doc.rect(totalsX, yPos - 5, 65, 9, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(12);
-    doc.text('Total', totalsX + 5, yPos);
-    doc.text('£' + total.toFixed(2), totalsValueX - 5, yPos, { align: 'right' });
-    
-    // Footer
-    doc.setTextColor(mediumGray[0], mediumGray[1], mediumGray[2]);
-    doc.setFont(undefined, 'italic');
-    doc.setFontSize(8);
-    doc.text('If you have any questions about this estimate, please contact', 105, 273, { align: 'center' });
-    doc.text('Trader Brothers on 07448835577', 105, 278, { align: 'center' });
-    
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-    doc.setFontSize(9);
-    doc.text('Thank you for your business', 105, 285, { align: 'center' });
-    
-    localStorage.setItem('traderBrosEstimateCount', estimateNumber);
-    estimateNumber++;
-    updateEstimateCounter();
-    
-    var filename = 'Estimate_' + estNumber + '_' + clientName.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
-    doc.save(filename);
-    
-    closePreview();
+    // Show loading state
+    var downloadBtn = event.target;
+    var originalText = downloadBtn.textContent;
+    downloadBtn.textContent = 'Generating PDF...';
+    downloadBtn.disabled = true;
+
+    try {
+        // Get the complete HTML
+        var htmlContent = generateCompleteHTML();
+        
+        // Generate filename
+        var sanitizedClientName = clientName.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+        var filename = 'Estimate_' + estNumber + '_' + sanitizedClientName + '.pdf';
+
+        console.log('Sending request to PDFShift...');
+
+        // Send request to PDFShift API
+        var response = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + btoa('api:' + PDFSHIFT_API_KEY),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                source: htmlContent,
+                landscape: false,
+                use_print: true,
+                margin: {
+                    top: '20px',
+                    bottom: '20px',
+                    left: '20px',
+                    right: '20px'
+                }
+            })
+        });
+
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            var errorData;
+            try {
+                errorData = await response.json();
+                console.error('PDFShift error response:', errorData);
+            } catch (e) {
+                errorData = { error: await response.text() || 'Unknown error' };
+            }
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check your PDFShift API key.');
+            } else if (response.status === 403) {
+                throw new Error('Access forbidden. Your API key may not have permission.');
+            } else if (response.status === 429) {
+                throw new Error('Rate limit exceeded. You may have used your free tier quota (250 PDFs/month).');
+            } else if (response.status === 400) {
+                throw new Error('Bad Request: ' + (errorData.error || errorData.message || 'Invalid request'));
+            } else {
+                throw new Error((errorData.error || errorData.message) || 'API Error (' + response.status + '): ' + response.statusText);
+            }
+        }
+
+        console.log('Receiving PDF from PDFShift...');
+
+        // Get the PDF as a blob
+        var blob = await response.blob();
+        if (blob.size === 0) {
+            throw new Error('Received empty PDF from server');
+        }
+
+        console.log('PDF blob size:', blob.size, 'bytes');
+
+        // Create download link
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
+
+        console.log('PDF downloaded successfully!');
+        
+        // Update estimate counter
+        localStorage.setItem('traderBrosEstimateCount', estimateNumber);
+        estimateNumber++;
+        updateEstimateCounter();
+        
+        // Show success message
+        setTimeout(function() {
+            alert('✓ PDF downloaded successfully!\n\nFile: ' + filename);
+        }, 200);
+        
+        closePreview();
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        console.error('Error stack:', error.stack);
+        var errorMessage = 'Error generating PDF\n\n';
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage += 'Network Error - Cannot connect to PDFShift API.\n\n';
+            errorMessage += 'Please check:\n';
+            errorMessage += '• Your internet connection\n';
+            errorMessage += '• Firewall or browser extensions blocking the request\n';
+            errorMessage += '• Try using a different browser\n\n';
+            errorMessage += 'Technical details are in the console (press F12)';
+        } else {
+            errorMessage += error.message;
+            errorMessage += '\n\nCheck console for more details (press F12)';
+        }
+        alert(errorMessage);
+    } finally {
+        downloadBtn.textContent = originalText;
+        downloadBtn.disabled = false;
+    }
 }
 
 window.onclick = function(event) {
