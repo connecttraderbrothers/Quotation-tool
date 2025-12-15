@@ -7,7 +7,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#fbbf24">
     <link rel="stylesheet" href="styles.css">
-    <!-- PDFShift API integration - no external library needed -->
     <style>
         /* Additional preview styles for modal */
         .estimate-container {
@@ -313,7 +312,7 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-primary" onclick="addItem(); return false;">Add Item to Quote</button>
+            <button type="button" class="btn btn-primary" id="addItemBtn">Add Item to Quote</button>
         </div>
 
         <div class="section" id="quoteSection" style="display: none;">
@@ -344,8 +343,8 @@
         </div>
 
         <div id="generateSection" style="display: none; margin-top: 20px; text-align: center;">
-            <button type="button" class="btn btn-success" onclick="previewQuote(); return false;">Preview Quote</button>
-            <button type="button" class="btn btn-secondary" onclick="downloadQuote(); return false;">Download PDF</button>
+            <button type="button" class="btn btn-success" id="previewBtn">Preview Quote</button>
+            <button type="button" class="btn btn-secondary" id="downloadBtn">Download PDF</button>
         </div>
     </div>
 
@@ -353,14 +352,14 @@
     <div id="previewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="close" onclick="closePreview(); return false;">&times;</span>
+                <span class="close" id="closePreviewBtn">&times;</span>
                 <h2>Quote Preview</h2>
             </div>
             <div class="modal-body" id="previewBody">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" onclick="downloadQuote(); return false;">Download PDF</button>
-                <button type="button" class="btn btn-secondary" onclick="closePreview(); return false;">Close</button>
+                <button type="button" class="btn btn-success" id="downloadPdfBtn">Download PDF</button>
+                <button type="button" class="btn btn-secondary" id="closeModalBtn">Close</button>
             </div>
         </div>
     </div>
