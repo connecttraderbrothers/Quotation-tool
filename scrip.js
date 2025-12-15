@@ -131,7 +131,10 @@ function handleTradeCategoryChange() {
     }
 }
 
-function handleRateTypeClick() {
+function handleRateTypeClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
     document.querySelectorAll('.rate-type-btn').forEach(function(b) {
         b.classList.remove('active');
     });
@@ -206,15 +209,28 @@ document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
 });
 
 function addItem() {
+    console.log('addItem called');
     var category = document.getElementById('tradeCategory').value || 'General';
     var description = document.getElementById('description').value;
     var quantity = parseFloat(document.getElementById('quantity').value);
     var unitPrice = parseFloat(document.getElementById('unitPrice').value);
     var customUnit = document.getElementById('customUnit').value;
 
-    if (!description || !unitPrice) {
-        alert('Please enter description and unit price');
-        return;
+    console.log('Values:', {category, description, quantity, unitPrice});
+
+    if (!description || description.trim() === '') {
+        alert('Please enter a description');
+        return false;
+    }
+
+    if (!unitPrice || unitPrice <= 0 || isNaN(unitPrice)) {
+        alert('Please enter a valid unit price');
+        return false;
+    }
+
+    if (!quantity || quantity <= 0 || isNaN(quantity)) {
+        alert('Please enter a valid quantity');
+        return false;
     }
 
     var unit = '';
@@ -239,22 +255,30 @@ function addItem() {
         lineTotal: lineTotal
     });
 
+    console.log('Item added. Total items:', items.length);
+
     updateQuoteTable();
     
+    // Clear form
     document.getElementById('description').value = '';
     document.getElementById('quantity').value = '1';
     document.getElementById('unitPrice').value = '';
     document.getElementById('customUnit').value = '';
     document.getElementById('tradeCategory').selectedIndex = 0;
     document.getElementById('tradeRateInfo').textContent = '';
+    
+    return false;
 }
 
 function removeItem(index) {
+    console.log('Removing item at index:', index);
     items.splice(index, 1);
     updateQuoteTable();
+    return false;
 }
 
 function updateQuoteTable() {
+    console.log('updateQuoteTable called, items:', items.length);
     var tbody = document.getElementById('quoteItems');
     var quoteSection = document.getElementById('quoteSection');
     var generateSection = document.getElementById('generateSection');
@@ -277,7 +301,7 @@ function updateQuoteTable() {
         html += '<td class="text-center">' + item.quantity + '</td>';
         html += '<td class="text-right">£' + item.unitPrice.toFixed(2) + '</td>';
         html += '<td class="text-right" style="font-weight: 600;">£' + item.lineTotal.toFixed(2) + '</td>';
-        html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + ')">Delete</button></td>';
+        html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + '); return false;">Delete</button></td>';
         html += '</tr>';
     }
 
@@ -306,6 +330,7 @@ function updateQuoteTable() {
     html += '</tr>';
 
     tbody.innerHTML = html;
+    console.log('Quote table updated');
 }
 
 function previewQuote() {
