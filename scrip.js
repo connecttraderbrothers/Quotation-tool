@@ -1,9 +1,7 @@
-// Global variables
 var items = [];
 var currentRateType = 'job';
 var estimateNumber = 1;
 
-// Trade rates configuration
 var tradeRates = {
     'Downtakings': { hourly: 30, daily: 220, job: 0 },
     'General Building': { hourly: 30, daily: 230, job: 0 },
@@ -31,109 +29,16 @@ var tradeRates = {
     'Materials': { hourly: 0, daily: 0, job: 0 }
 };
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-});
-
-function initializeApp() {
-    // Load estimate counter
-    if (localStorage.getItem('traderBrosEstimateCount')) {
-        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
-    }
-    updateEstimateCounter();
-    
-    // Set up event listeners
-    setupEventListeners();
+if (localStorage.getItem('traderBrosEstimateCount')) {
+    estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
 }
-
-function setupEventListeners() {
-    // Client name input
-    var clientNameInput = document.getElementById('clientName');
-    if (clientNameInput) {
-        clientNameInput.addEventListener('input', handleClientNameInput);
-    }
-    
-    // Trade category change
-    var tradeCategorySelect = document.getElementById('tradeCategory');
-    if (tradeCategorySelect) {
-        tradeCategorySelect.addEventListener('change', handleTradeCategoryChange);
-    }
-    
-    // Rate type buttons
-    document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-        btn.addEventListener('click', handleRateTypeClick);
-    });
-    
-    // Add item button
-    var addItemBtn = document.getElementById('addItemBtn');
-    if (addItemBtn) {
-        addItemBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            addItem();
-        });
-    }
-    
-    // Preview button
-    var previewBtn = document.getElementById('previewBtn');
-    if (previewBtn) {
-        previewBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            previewQuote();
-        });
-    }
-    
-    // Download buttons
-    var downloadBtn = document.getElementById('downloadBtn');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            downloadQuote();
-        });
-    }
-    
-    var downloadPdfBtn = document.getElementById('downloadPdfBtn');
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            downloadQuote();
-        });
-    }
-    
-    // Close modal buttons
-    var closePreviewBtn = document.getElementById('closePreviewBtn');
-    if (closePreviewBtn) {
-        closePreviewBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closePreview();
-        });
-    }
-    
-    var closeModalBtn = document.getElementById('closeModalBtn');
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closePreview();
-        });
-    }
-    
-    // Modal close on outside click
-    window.onclick = function(event) {
-        var modal = document.getElementById('previewModal');
-        if (event.target == modal) {
-            closePreview();
-        }
-    };
-}
+updateEstimateCounter();
 
 function updateEstimateCounter() {
-    var counterElement = document.getElementById('estimateCounter');
-    if (counterElement) {
-        counterElement.textContent = '#' + String(estimateNumber).padStart(4, '0');
-    }
+    document.getElementById('estimateCounter').textContent = '#' + String(estimateNumber).padStart(4, '0');
 }
 
-function handleClientNameInput() {
+document.getElementById('clientName').addEventListener('input', function() {
     var name = this.value.trim();
     if (name) {
         var parts = name.split(' ');
@@ -154,9 +59,9 @@ function handleClientNameInput() {
     } else {
         document.getElementById('customerId').value = '';
     }
-}
+});
 
-function handleTradeCategoryChange() {
+document.getElementById('tradeCategory').addEventListener('change', function() {
     var selectedTrade = this.value;
     var rateInfo = document.getElementById('tradeRateInfo');
     
@@ -181,42 +86,7 @@ function handleTradeCategoryChange() {
         rateInfo.textContent = '';
         document.getElementById('unitPrice').value = '';
     }
-}
-
-function handleRateTypeClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // Remove active class from all buttons
-    document.querySelectorAll('.rate-type-btn').forEach(function(b) {
-        b.classList.remove('active');
-    });
-    
-    // Add active class to clicked button
-    this.classList.add('active');
-    currentRateType = this.getAttribute('data-type');
-    
-    var customUnitGroup = document.getElementById('customUnitGroup');
-    var rateLabel = document.getElementById('rateLabel');
-    
-    // Update UI based on rate type
-    if (currentRateType === 'custom') {
-        customUnitGroup.classList.remove('hidden');
-        rateLabel.textContent = 'Unit Price (£) *';
-    } else if (currentRateType === 'daily') {
-        customUnitGroup.classList.add('hidden');
-        rateLabel.textContent = 'Day Rate (£) *';
-    } else if (currentRateType === 'job') {
-        customUnitGroup.classList.add('hidden');
-        rateLabel.textContent = 'Per Job Rate (£) *';
-    } else {
-        customUnitGroup.classList.add('hidden');
-        rateLabel.textContent = 'Hourly Rate (£) *';
-    }
-    
-    // Update price from trade rates if applicable
-    updatePriceFromTrade();
-}
+});
 
 function updatePriceFromTrade() {
     var selectedTrade = document.getElementById('tradeCategory').value;
@@ -238,29 +108,45 @@ function updatePriceFromTrade() {
     }
 }
 
+document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.rate-type-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        this.classList.add('active');
+        currentRateType = this.getAttribute('data-type');
+        
+        var customUnitGroup = document.getElementById('customUnitGroup');
+        var rateLabel = document.getElementById('rateLabel');
+        
+        if (currentRateType === 'custom') {
+            customUnitGroup.classList.remove('hidden');
+            rateLabel.textContent = 'Unit Price (£) *';
+        } else if (currentRateType === 'daily') {
+            customUnitGroup.classList.add('hidden');
+            rateLabel.textContent = 'Day Rate (£) *';
+        } else if (currentRateType === 'job') {
+            customUnitGroup.classList.add('hidden');
+            rateLabel.textContent = 'Per Job Rate (£) *';
+        } else {
+            customUnitGroup.classList.add('hidden');
+            rateLabel.textContent = 'Hourly Rate (£) *';
+        }
+        
+        updatePriceFromTrade();
+    });
+});
+
 function addItem() {
-    console.log('addItem called');
     var category = document.getElementById('tradeCategory').value || 'General';
     var description = document.getElementById('description').value;
     var quantity = parseFloat(document.getElementById('quantity').value);
     var unitPrice = parseFloat(document.getElementById('unitPrice').value);
     var customUnit = document.getElementById('customUnit').value;
 
-    console.log('Values:', {category, description, quantity, unitPrice});
-
-    if (!description || description.trim() === '') {
-        alert('Please enter a description');
-        return false;
-    }
-
-    if (!unitPrice || unitPrice <= 0 || isNaN(unitPrice)) {
-        alert('Please enter a valid unit price');
-        return false;
-    }
-
-    if (!quantity || quantity <= 0 || isNaN(quantity)) {
-        alert('Please enter a valid quantity');
-        return false;
+    if (!description || !unitPrice) {
+        alert('Please enter description and unit price');
+        return;
     }
 
     var unit = '';
@@ -285,30 +171,22 @@ function addItem() {
         lineTotal: lineTotal
     });
 
-    console.log('Item added. Total items:', items.length);
-
     updateQuoteTable();
     
-    // Clear form
     document.getElementById('description').value = '';
     document.getElementById('quantity').value = '1';
     document.getElementById('unitPrice').value = '';
     document.getElementById('customUnit').value = '';
     document.getElementById('tradeCategory').selectedIndex = 0;
     document.getElementById('tradeRateInfo').textContent = '';
-    
-    return false;
 }
 
 function removeItem(index) {
-    console.log('Removing item at index:', index);
     items.splice(index, 1);
     updateQuoteTable();
-    return false;
 }
 
 function updateQuoteTable() {
-    console.log('updateQuoteTable called, items:', items.length);
     var tbody = document.getElementById('quoteItems');
     var quoteSection = document.getElementById('quoteSection');
     var generateSection = document.getElementById('generateSection');
@@ -331,7 +209,7 @@ function updateQuoteTable() {
         html += '<td class="text-center">' + item.quantity + '</td>';
         html += '<td class="text-right">£' + item.unitPrice.toFixed(2) + '</td>';
         html += '<td class="text-right" style="font-weight: 600;">£' + item.lineTotal.toFixed(2) + '</td>';
-        html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + '); return false;">Delete</button></td>';
+        html += '<td class="text-center"><button class="btn-delete" onclick="removeItem(' + i + ')">Delete</button></td>';
         html += '</tr>';
     }
 
@@ -360,13 +238,11 @@ function updateQuoteTable() {
     html += '</tr>';
 
     tbody.innerHTML = html;
-    console.log('Quote table updated');
 }
 
 function previewQuote() {
     var clientName = document.getElementById('clientName').value || '[Client Name]';
     var clientPhone = document.getElementById('clientPhone').value;
-    var projectName = document.getElementById('projectName').value || '[Project Name]';
     var projectAddress = document.getElementById('projectAddress').value || '[Project Address]';
     var customerId = document.getElementById('customerId').value || 'N/A';
     var depositPercent = document.getElementById('depositPercent').value || '30';
@@ -385,6 +261,7 @@ function previewQuote() {
 
     var previewHtml = '<div class="estimate-container">';
     
+    // Header matching template
     previewHtml += '<div class="preview-header">';
     previewHtml += '<div class="company-info">';
     previewHtml += '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>';
@@ -398,13 +275,14 @@ function previewQuote() {
     previewHtml += '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo">';
     previewHtml += '</div></div>';
 
+    // Estimate banner
     previewHtml += '<div class="estimate-banner">Estimate for</div>';
 
+    // Info section
     previewHtml += '<div class="info-section">';
     previewHtml += '<div class="client-info">';
     previewHtml += '<h3>' + clientName + '</h3>';
     previewHtml += '<p>';
-    previewHtml += projectName + '<br>';
     previewHtml += projectAddress;
     if (clientPhone) previewHtml += '<br>' + clientPhone;
     previewHtml += '</p></div>';
@@ -417,6 +295,7 @@ function previewQuote() {
     previewHtml += '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr>';
     previewHtml += '</table></div></div>';
 
+    // Items table
     previewHtml += '<table class="items-table">';
     previewHtml += '<thead><tr>';
     previewHtml += '<th>Description</th>';
@@ -437,6 +316,7 @@ function previewQuote() {
 
     previewHtml += '</tbody></table>';
 
+    // Notes section
     previewHtml += '<div class="notes-section">';
     previewHtml += '<h3>Notes:</h3>';
     previewHtml += '<ol>';
@@ -450,13 +330,15 @@ function previewQuote() {
     }
     previewHtml += '</ol></div>';
 
-    previewHtml += '<div class="totals-section-preview">';
+    // Totals section
+    previewHtml += '<div class="totals-section">';
     previewHtml += '<div class="totals-box">';
     previewHtml += '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div>';
     previewHtml += '<div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div>';
     previewHtml += '<div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div>';
     previewHtml += '</div></div>';
 
+    // Footer note
     previewHtml += '<div class="footer-note">';
     previewHtml += 'If you have any questions about this estimate, please contact<br>';
     previewHtml += 'Trader Brothers on 07448835577';
@@ -471,4 +353,11 @@ function previewQuote() {
 
 function closePreview() {
     document.getElementById('previewModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    var modal = document.getElementById('previewModal');
+    if (event.target == modal) {
+        closePreview();
+    }
 }
