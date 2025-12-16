@@ -29,64 +29,80 @@ var tradeRates = {
     'Materials': { hourly: 0, daily: 0, job: 0 }
 };
 
-if (localStorage.getItem('traderBrosEstimateCount')) {
-    estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
-}
-updateEstimateCounter();
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('traderBrosEstimateCount')) {
+        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+    }
+    updateEstimateCounter();
+    
+    // Setup rate type buttons
+    setupRateTypeButtons();
+    
+    // Setup trade category handler
+    setupTradeCategoryHandler();
+    
+    // Setup client name handler
+    setupClientNameHandler();
+});
 
 function updateEstimateCounter() {
     document.getElementById('estimateCounter').textContent = '#' + String(estimateNumber).padStart(4, '0');
 }
 
-document.getElementById('clientName').addEventListener('input', function() {
-    var name = this.value.trim();
-    if (name) {
-        var parts = name.split(' ');
-        var customerId = '';
-        
-        if (parts.length >= 2) {
-            var firstName = parts[0].substring(0, 3).toUpperCase();
-            var lastName = parts[parts.length - 1].substring(0, 3).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = firstName + lastName + randomNum;
-        } else if (parts.length === 1) {
-            var singleName = parts[0].substring(0, 6).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = singleName + randomNum;
+function setupClientNameHandler() {
+    document.getElementById('clientName').addEventListener('input', function() {
+        var name = this.value.trim();
+        if (name) {
+            var parts = name.split(' ');
+            var customerId = '';
+            
+            if (parts.length >= 2) {
+                var firstName = parts[0].substring(0, 3).toUpperCase();
+                var lastName = parts[parts.length - 1].substring(0, 3).toUpperCase();
+                var randomNum = Math.floor(1000 + Math.random() * 9000);
+                customerId = firstName + lastName + randomNum;
+            } else if (parts.length === 1) {
+                var singleName = parts[0].substring(0, 6).toUpperCase();
+                var randomNum = Math.floor(1000 + Math.random() * 9000);
+                customerId = singleName + randomNum;
+            }
+            
+            document.getElementById('customerId').value = customerId;
+        } else {
+            document.getElementById('customerId').value = '';
         }
-        
-        document.getElementById('customerId').value = customerId;
-    } else {
-        document.getElementById('customerId').value = '';
-    }
-});
+    });
+}
 
-document.getElementById('tradeCategory').addEventListener('change', function() {
-    var selectedTrade = this.value;
-    var rateInfo = document.getElementById('tradeRateInfo');
-    
-    if (selectedTrade && tradeRates[selectedTrade]) {
-        var rates = tradeRates[selectedTrade];
-        var infoText = 'Standard rates: ';
-        var rateParts = [];
+function setupTradeCategoryHandler() {
+    document.getElementById('tradeCategory').addEventListener('change', function() {
+        var selectedTrade = this.value;
+        var rateInfo = document.getElementById('tradeRateInfo');
         
-        if (rates.hourly > 0) rateParts.push('£' + rates.hourly + '/hr');
-        if (rates.daily > 0) rateParts.push('£' + rates.daily + '/day');
-        if (rates.job > 0) rateParts.push('£' + rates.job + '/job');
-        
-        if (rateParts.length > 0) {
-            infoText += rateParts.join(' | ');
-            rateInfo.textContent = infoText;
+        if (selectedTrade && tradeRates[selectedTrade]) {
+            var rates = tradeRates[selectedTrade];
+            var infoText = 'Standard rates: ';
+            var rateParts = [];
+            
+            if (rates.hourly > 0) rateParts.push('£' + rates.hourly + '/hr');
+            if (rates.daily > 0) rateParts.push('£' + rates.daily + '/day');
+            if (rates.job > 0) rateParts.push('£' + rates.job + '/job');
+            
+            if (rateParts.length > 0) {
+                infoText += rateParts.join(' | ');
+                rateInfo.textContent = infoText;
+            } else {
+                rateInfo.textContent = '';
+            }
+            
+            updatePriceFromTrade();
         } else {
             rateInfo.textContent = '';
+            document.getElementById('unitPrice').value = '';
         }
-        
-        updatePriceFromTrade();
-    } else {
-        rateInfo.textContent = '';
-        document.getElementById('unitPrice').value = '';
-    }
-});
+    });
+}
 
 function updatePriceFromTrade() {
     var selectedTrade = document.getElementById('tradeCategory').value;
@@ -108,34 +124,47 @@ function updatePriceFromTrade() {
     }
 }
 
-document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.rate-type-btn').forEach(function(b) {
-            b.classList.remove('active');
+function setupRateTypeButtons() {
+    var buttons = document.querySelectorAll('.rate-type-btn');
+    
+    buttons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent any default button behavior
+            
+            // Remove active class from all buttons
+            buttons.forEach(function(b) {
+                b.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Update current rate type
+            currentRateType = this.getAttribute('data-type');
+            
+            var customUnitGroup = document.getElementById('customUnitGroup');
+            var rateLabel = document.getElementById('rateLabel');
+            
+            // Update UI based on rate type
+            if (currentRateType === 'custom') {
+                customUnitGroup.classList.remove('hidden');
+                rateLabel.textContent = 'Unit Price (£) *';
+            } else if (currentRateType === 'daily') {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Day Rate (£) *';
+            } else if (currentRateType === 'job') {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Per Job Rate (£) *';
+            } else {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Hourly Rate (£) *';
+            }
+            
+            // Update price from trade rates
+            updatePriceFromTrade();
         });
-        this.classList.add('active');
-        currentRateType = this.getAttribute('data-type');
-        
-        var customUnitGroup = document.getElementById('customUnitGroup');
-        var rateLabel = document.getElementById('rateLabel');
-        
-        if (currentRateType === 'custom') {
-            customUnitGroup.classList.remove('hidden');
-            rateLabel.textContent = 'Unit Price (£) *';
-        } else if (currentRateType === 'daily') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Day Rate (£) *';
-        } else if (currentRateType === 'job') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Per Job Rate (£) *';
-        } else {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Hourly Rate (£) *';
-        }
-        
-        updatePriceFromTrade();
     });
-});
+}
 
 function addItem() {
     var category = document.getElementById('tradeCategory').value || 'General';
@@ -144,8 +173,13 @@ function addItem() {
     var unitPrice = parseFloat(document.getElementById('unitPrice').value);
     var customUnit = document.getElementById('customUnit').value;
 
-    if (!description || !unitPrice) {
-        alert('Please enter description and unit price');
+    if (!description || !unitPrice || isNaN(unitPrice) || unitPrice <= 0) {
+        alert('Please enter a valid description and unit price');
+        return;
+    }
+
+    if (isNaN(quantity) || quantity <= 0) {
+        alert('Please enter a valid quantity');
         return;
     }
 
@@ -173,6 +207,7 @@ function addItem() {
 
     updateQuoteTable();
     
+    // Clear form fields
     document.getElementById('description').value = '';
     document.getElementById('quantity').value = '1';
     document.getElementById('unitPrice').value = '';
@@ -241,6 +276,11 @@ function updateQuoteTable() {
 }
 
 function previewQuote() {
+    if (items.length === 0) {
+        alert('Please add at least one item to the quote before previewing');
+        return;
+    }
+
     var clientName = document.getElementById('clientName').value || '[Client Name]';
     var clientPhone = document.getElementById('clientPhone').value;
     var projectName = document.getElementById('projectName').value || '[Project Name]';
