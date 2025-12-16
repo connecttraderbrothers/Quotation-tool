@@ -35,66 +35,105 @@ var tradeRates = {
 };
 
 // Initialize on page load
-if (localStorage.getItem('traderBrosEstimateCount')) {
-    estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('traderBrosEstimateCount')) {
+        estimateNumber = parseInt(localStorage.getItem('traderBrosEstimateCount')) + 1;
+    }
+    updateEstimateCounter();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('clientName').addEventListener('input', function() {
+        var name = this.value.trim();
+        if (name) {
+            var parts = name.split(' ');
+            var customerId = '';
+            
+            if (parts.length >= 2) {
+                var firstName = parts[0].substring(0, 3).toUpperCase();
+                var lastName = parts[parts.length - 1].substring(0, 3).toUpperCase();
+                var randomNum = Math.floor(1000 + Math.random() * 9000);
+                customerId = firstName + lastName + randomNum;
+            } else if (parts.length === 1) {
+                var singleName = parts[0].substring(0, 6).toUpperCase();
+                var randomNum = Math.floor(1000 + Math.random() * 9000);
+                customerId = singleName + randomNum;
+            }
+            
+            document.getElementById('customerId').value = customerId;
+        } else {
+            document.getElementById('customerId').value = '';
+        }
+    });
+
+    document.getElementById('tradeCategory').addEventListener('change', function() {
+        var selectedTrade = this.value;
+        var rateInfo = document.getElementById('tradeRateInfo');
+        
+        if (selectedTrade && tradeRates[selectedTrade]) {
+            var rates = tradeRates[selectedTrade];
+            var infoText = 'Standard rates: ';
+            var rateParts = [];
+            
+            if (rates.hourly > 0) rateParts.push('£' + rates.hourly + '/hr');
+            if (rates.daily > 0) rateParts.push('£' + rates.daily + '/day');
+            if (rates.job > 0) rateParts.push('£' + rates.job + '/job');
+            
+            if (rateParts.length > 0) {
+                infoText += rateParts.join(' | ');
+                rateInfo.textContent = infoText;
+            } else {
+                rateInfo.textContent = '';
+            }
+            
+            updatePriceFromTrade();
+        } else {
+            rateInfo.textContent = '';
+            document.getElementById('unitPrice').value = '';
+        }
+    });
+
+    document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.rate-type-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+            currentRateType = this.getAttribute('data-type');
+            
+            var customUnitGroup = document.getElementById('customUnitGroup');
+            var rateLabel = document.getElementById('rateLabel');
+            
+            if (currentRateType === 'custom') {
+                customUnitGroup.classList.remove('hidden');
+                rateLabel.textContent = 'Unit Price (£) *';
+            } else if (currentRateType === 'daily') {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Day Rate (£) *';
+            } else if (currentRateType === 'job') {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Per Job Rate (£) *';
+            } else {
+                customUnitGroup.classList.add('hidden');
+                rateLabel.textContent = 'Hourly Rate (£) *';
+            }
+            
+            updatePriceFromTrade();
+        });
+    });
+
+    window.onclick = function(event) {
+        var modal = document.getElementById('previewModal');
+        if (event.target == modal) {
+            closePreview();
+        }
+    };
 }
-updateEstimateCounter();
 
 function updateEstimateCounter() {
     document.getElementById('estimateCounter').textContent = '#' + String(estimateNumber).padStart(4, '0');
 }
-
-// Client name input handler
-document.getElementById('clientName').addEventListener('input', function() {
-    var name = this.value.trim();
-    if (name) {
-        var parts = name.split(' ');
-        var customerId = '';
-        
-        if (parts.length >= 2) {
-            var firstName = parts[0].substring(0, 3).toUpperCase();
-            var lastName = parts[parts.length - 1].substring(0, 3).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = firstName + lastName + randomNum;
-        } else if (parts.length === 1) {
-            var singleName = parts[0].substring(0, 6).toUpperCase();
-            var randomNum = Math.floor(1000 + Math.random() * 9000);
-            customerId = singleName + randomNum;
-        }
-        
-        document.getElementById('customerId').value = customerId;
-    } else {
-        document.getElementById('customerId').value = '';
-    }
-});
-
-// Trade category change handler
-document.getElementById('tradeCategory').addEventListener('change', function() {
-    var selectedTrade = this.value;
-    var rateInfo = document.getElementById('tradeRateInfo');
-    
-    if (selectedTrade && tradeRates[selectedTrade]) {
-        var rates = tradeRates[selectedTrade];
-        var infoText = 'Standard rates: ';
-        var rateParts = [];
-        
-        if (rates.hourly > 0) rateParts.push('£' + rates.hourly + '/hr');
-        if (rates.daily > 0) rateParts.push('£' + rates.daily + '/day');
-        if (rates.job > 0) rateParts.push('£' + rates.job + '/job');
-        
-        if (rateParts.length > 0) {
-            infoText += rateParts.join(' | ');
-            rateInfo.textContent = infoText;
-        } else {
-            rateInfo.textContent = '';
-        }
-        
-        updatePriceFromTrade();
-    } else {
-        rateInfo.textContent = '';
-        document.getElementById('unitPrice').value = '';
-    }
-});
 
 function updatePriceFromTrade() {
     var selectedTrade = document.getElementById('tradeCategory').value;
@@ -116,36 +155,6 @@ function updatePriceFromTrade() {
     }
 }
 
-// Rate type button handlers
-document.querySelectorAll('.rate-type-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.rate-type-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        this.classList.add('active');
-        currentRateType = this.getAttribute('data-type');
-        
-        var customUnitGroup = document.getElementById('customUnitGroup');
-        var rateLabel = document.getElementById('rateLabel');
-        
-        if (currentRateType === 'custom') {
-            customUnitGroup.classList.remove('hidden');
-            rateLabel.textContent = 'Unit Price (£) *';
-        } else if (currentRateType === 'daily') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Day Rate (£) *';
-        } else if (currentRateType === 'job') {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Per Job Rate (£) *';
-        } else {
-            customUnitGroup.classList.add('hidden');
-            rateLabel.textContent = 'Hourly Rate (£) *';
-        }
-        
-        updatePriceFromTrade();
-    });
-});
-
 function addItem() {
     var category = document.getElementById('tradeCategory').value || 'General';
     var description = document.getElementById('description').value;
@@ -153,8 +162,13 @@ function addItem() {
     var unitPrice = parseFloat(document.getElementById('unitPrice').value);
     var customUnit = document.getElementById('customUnit').value;
 
-    if (!description || !unitPrice) {
+    if (!description || !unitPrice || isNaN(unitPrice)) {
         alert('Please enter description and unit price');
+        return;
+    }
+
+    if (isNaN(quantity) || quantity <= 0) {
+        alert('Please enter a valid quantity');
         return;
     }
 
@@ -406,110 +420,29 @@ function generateCompleteHTML() {
     }
 
     var customNotes = document.getElementById('customNotes').value;
+    var notesHtml = '';
+    if (customNotes) {
+        notesHtml = '<li>' + customNotes + '</li>';
+    }
 
-    return '<!DOCTYPE html>' +
-'<html><head><meta charset="UTF-8"><title>Estimate - ' + clientName + '</title>' +
-'<style>' +
-'*{margin:0;padding:0;box-sizing:border-box}' +
-'body{font-family:Arial,sans-serif;padding:20px;color:#333}' +
-'.header{display:flex;justify-content:space-between;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #333}' +
-'.company-name{font-size:24px;font-weight:bold;margin-bottom:10px}' +
-'.company-name .highlight{color:#d4af37}' +
-'.company-details{font-size:11px;line-height:1.6;color:#666}' +
-'.logo{width:120px;height:auto}' +
-'.estimate-banner{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:15px 20px;margin-bottom:25px;display:inline-block;font-weight:bold;color:white}' +
-'.info-section{display:flex;justify-content:space-between;margin-bottom:30px}' +
-'.client-info h3{font-size:16px;color:#666;margin-bottom:10px;font-weight:bold}' +
-'.client-info p{font-size:15px;line-height:1.6;font-weight:500}' +
-'.details-table{width:100%;border-collapse:collapse}' +
-'.details-table td{padding:8px 10px;font-size:13px}' +
-'.detail-label{color:#666;width:120px}' +
-'.detail-value{font-weight:bold}' +
-'.expiry-date{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:5px 10px;color:white;font-weight:bold}' +
-'.items-table{width:100%;border-collapse:collapse;margin:30px 0}' +
-'.items-table thead{background:#f5f5f5}' +
-'.items-table th{padding:14px 12px;text-align:left;font-weight:bold;border-bottom:2px solid #ddd}' +
-'.items-table th:nth-child(2),.items-table th:nth-child(3),.items-table th:nth-child(4){text-align:right}' +
-'.items-table td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f0f0}' +
-'.items-table td:nth-child(2),.items-table td:nth-child(3),.items-table td:nth-child(4){text-align:right}' +
-'.notes-section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:3px solid #bc9c22}' +
-'.notes-section h3{font-size:13px;margin-bottom:10px}' +
-'.notes-section ol{margin-left:20px;font-size:12px;line-height:1.8;color:#666}' +
-'.totals-section-preview{margin-top:30px;display:flex;justify-content:flex-end}' +
-'.totals-box{width:300px}' +
-'.total-row-preview{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px}' +
-'.total-row-preview.subtotal{border-top:1px solid #ddd}' +
-'.total-row-preview.vat{color:#666}' +
-'.total-row-preview.final{background:linear-gradient(135deg,#bc9c22,#d4af37);color:white;font-weight:bold;font-size:16px;margin-top:5px}' +
-'.footer-note{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:11px;color:#666;font-style:italic}' +
-'.thank-you{margin-top:15px;font-weight:bold;color:#333}' +
-'</style></head><body>' +
-'<div class="header">' +
-    '<div class="company-info">' +
-        '<div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div>' +
-        '<div class="company-details">8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>07979309957<br>traderbrotherslimited@gmail.com</div>' +
-    '</div>' +
-    '<div class="logo-container">' +
-        '<img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Logo" class="logo">' +
-    '</div>' +
-'</div>' +
-'<div class="estimate-banner">Estimate for</div>' +
-'<div class="info-section">' +
-    '<div class="client-info">' +
-        '<h3>' + clientName + '</h3>' +
-        '<p>' + projectName + '<br>' + projectAddress + (clientPhone ? '<br>' + clientPhone : '') + '</p>' +
-    '</div>' +
-    '<div class="estimate-details">' +
-        '<table class="details-table">' +
-            '<tr><td class="detail-label">Date:</td><td class="detail-value">' + quoteDate + '</td></tr>' +
-            '<tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + estNumber + '</td></tr>' +
-            '<tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + customerId + '</td></tr>' +
-            '<tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr>' +
-        '</table>' +
-    '</div>' +
-'</div>' +
-'<table class="items-table">' +
-    '<thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead>' +
-    '<tbody>' + itemsRows + '</tbody>' +
-'</table>' +
-'<div class="notes-section">' +
-    '<h3>Notes:</h3>' +
-    '<ol>' +
-        '<li>Estimate valid for 31 days</li>' +
-        '<li>Payment of ' + depositPercent + '% required to secure start date</li>' +
-        '<li>Pending to be supplied by customer</li>' +
-        '<li>Any extras charged accordingly</li>' +
-        (customNotes ? '<li>' + customNotes + '</li>' : '') +
-    '</ol>' +
-'</div>' +
-'<div class="totals-section-preview">' +
-    '<div class="totals-box">' +
-        '<div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div>' +
-        '<div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div>' +
-        '<div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div>' +
-    '</div>' +
-'</div>' +
-'<div class="footer-note">' +
-    'If you have any questions, please contact Trader Brothers on 07448835577' +
-    '<div class="thank-you">Thank you for your business</div>' +
-'</div>' +
-'</body></html>';
+    var styles = '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:white;padding:20px;color:#333}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #333}.company-info{flex:1}.company-name{font-size:24px;font-weight:bold;margin-bottom:10px;color:#333}.company-name .highlight{color:#d4af37}.company-details{font-size:11px;line-height:1.6;color:#666}.logo-container{flex-shrink:0}.logo{width:120px;height:auto;display:block}.estimate-banner{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:15px 20px;margin-bottom:25px;display:inline-block;font-weight:bold;font-size:16px;color:white}.info-section{display:flex;justify-content:space-between;margin-bottom:30px}.client-info{flex:1}.client-info h3{font-size:16px;color:#666;margin-bottom:10px;font-weight:bold}.client-info p{font-size:15px;line-height:1.6;color:#333;font-weight:500}.estimate-details{flex:0 0 250px}.details-table{width:100%;border-collapse:collapse}.details-table td{padding:8px 10px;font-size:13px}.detail-label{color:#666;text-align:left;width:120px}.detail-value{font-weight:bold;color:#333;text-align:left}.expiry-date{background:linear-gradient(135deg,#bc9c22,#d4af37);padding:5px 10px;display:inline-block;color:white;font-weight:bold}.items-table{width:100%;border-collapse:collapse;margin:30px 0}.items-table thead{background:#f5f5f5}.items-table th{padding:14px 12px;text-align:left;font-size:14px;font-weight:bold;color:#333;border-bottom:2px solid #ddd}.items-table th:nth-child(2),.items-table th:nth-child(3),.items-table th:nth-child(4){text-align:right;width:100px}.items-table td{padding:8px 12px;font-size:12px;font-weight:normal;border-bottom:1px solid #f0f0f0;color:#555}.items-table td:nth-child(2),.items-table td:nth-child(3),.items-table td:nth-child(4){text-align:right}.notes-section{margin:30px 0;padding:20px;background:#f9f9f9;border-left:3px solid #bc9c22}.notes-section h3{font-size:13px;margin-bottom:10px;color:#333}.notes-section ol{margin-left:20px;font-size:12px;line-height:1.8;color:#666}.totals-section-preview{margin-top:30px;display:flex;justify-content:flex-end}.totals-box{width:300px}.total-row-preview{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px}.total-row-preview.subtotal{border-top:1px solid #ddd}.total-row-preview.vat{color:#666}.total-row-preview.final{background:linear-gradient(135deg,#bc9c22,#d4af37);color:white;font-weight:bold;font-size:16px;border-top:2px solid #333;margin-top:5px}.footer-note{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:11px;color:#666;font-style:italic}.thank-you{margin-top:15px;font-weight:bold;color:#333;font-size:12px}@media print{body{padding:0}}</style>';
+
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Estimate - ' + clientName + '</title>' + styles + '</head><body><div class="estimate-container"><div class="header"><div class="company-info"><div class="company-name">TR<span class="highlight">A</span>DER BROTHERS LTD</div><div class="company-details">8 Craigour Terrace<br>Edinburgh, EH17 7PB<br>07979309957<br>traderbrotherslimited@gmail.com</div></div><div class="logo-container"><img src="https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true" alt="Trader Brothers Logo" class="logo"></div></div><div class="estimate-banner">Estimate for</div><div class="info-section"><div class="client-info"><h3>' + clientName + '</h3><p>' + projectName + '<br>' + projectAddress + (clientPhone ? '<br>' + clientPhone : '') + '</p></div><div class="estimate-details"><table class="details-table"><tr><td class="detail-label">Date:</td><td class="detail-value">' + quoteDate + '</td></tr><tr><td class="detail-label">Estimate #:</td><td class="detail-value">' + estNumber + '</td></tr><tr><td class="detail-label">Customer Ref:</td><td class="detail-value">' + customerId + '</td></tr><tr><td class="detail-label">Expiry Date:</td><td class="expiry-date">' + expiryDate + '</td></tr></table></div></div><table class="items-table"><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Total price</th></tr></thead><tbody>' + itemsRows + '</tbody></table><div class="notes-section"><h3>Notes:</h3><ol><li>Estimate valid for 31 days</li><li>Payment of ' + depositPercent + '% is required to secure start date</li><li>Pending to be supplied by customer</li><li>Any extras to be charged accordingly</li>' + notesHtml + '</ol></div><div class="totals-section-preview"><div class="totals-box"><div class="total-row-preview subtotal"><span>Subtotal</span><span>£' + subtotal.toFixed(2) + '</span></div><div class="total-row-preview vat"><span>VAT</span><span>£' + vat.toFixed(2) + '</span></div><div class="total-row-preview final"><span>Total</span><span>£' + total.toFixed(2) + '</span></div></div></div><div class="footer-note">If you have any questions about this estimate, please contact Trader Brothers on 07448835577<div class="thank-you">Thank you for your business</div></div></div></body></html>';
 }
 
 async function downloadQuote() {
     if (items.length === 0) {
-        alert('Please add items before generating PDF');
+        alert('Please add items to the quote before generating PDF');
         return;
     }
 
     var clientName = document.getElementById('clientName').value || 'Client';
     var estNumber = String(estimateNumber).padStart(4, '0');
-    var filename = 'Estimate_' + estNumber + '_' + clientName.substring(0,20).replace(/[^a-zA-Z0-9]/g,'_') + '.pdf';
     
-    var downloadBtns = document.querySelectorAll('.btn-success, .btn-secondary');
+    var downloadBtns = document.querySelectorAll('button');
     var downloadBtn = null;
     for (var i = 0; i < downloadBtns.length; i++) {
-        if (downloadBtns[i].textContent.includes('Download')) {
+        if (downloadBtns[i].textContent.includes('Download PDF') || downloadBtns[i].textContent.includes('Generating PDF')) {
             downloadBtn = downloadBtns[i];
             break;
         }
@@ -522,8 +455,13 @@ async function downloadQuote() {
     }
 
     try {
-        console.log('Sending request to PDFShift...');
+        var htmlContent = generateCompleteHTML();
         
+        var sanitizedClientName = clientName.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+        var filename = 'Estimate_' + estNumber + '_' + sanitizedClientName + '.pdf';
+
+        console.log('Sending request to PDFShift...');
+
         var response = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
             method: 'POST',
             headers: {
@@ -531,10 +469,15 @@ async function downloadQuote() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                source: generateCompleteHTML(),
+                source: htmlContent,
                 landscape: false,
                 use_print: true,
-                margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+                margin: {
+                    top: '20px',
+                    bottom: '20px',
+                    left: '20px',
+                    right: '20px'
+                }
             })
         });
 
@@ -544,32 +487,46 @@ async function downloadQuote() {
             var errorData;
             try {
                 errorData = await response.json();
-                console.error('PDFShift error:', errorData);
+                console.error('PDFShift error response:', errorData);
             } catch (e) {
-                errorData = { error: 'Unknown error' };
+                errorData = { error: await response.text() || 'Unknown error' };
             }
-            
             if (response.status === 401) {
                 throw new Error('Authentication failed. Please check your PDFShift API key.');
+            } else if (response.status === 403) {
+                throw new Error('Access forbidden. Your API key may not have permission.');
             } else if (response.status === 429) {
-                throw new Error('Rate limit exceeded. You may have used your free tier quota.');
-            } else {
-                throw new Error(errorData.error || errorData.message || 'Error ' + response.status);
+                throw new Error('Rate limit exceeded. You may have used your free tier quota (250 PDFs/month).');
+            } else if (response.status === 400) {
+                throw new Error('Bad Request: ' + (errorData.error || errorData.message || 'Invalid request'));
+             } else {
+                throw new Error((errorData.error || errorData.message) || 'API Error (' + response.status + '): ' + response.statusText);
             }
         }
 
+        console.log('Receiving PDF from PDFShift...');
+
         var blob = await response.blob();
+        if (blob.size === 0) {
+            throw new Error('Received empty PDF from server');
+        }
+
         console.log('PDF blob size:', blob.size, 'bytes');
 
         var url = window.URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        setTimeout(function() {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
 
+        console.log('PDF downloaded successfully!');
+        
         localStorage.setItem('traderBrosEstimateCount', estimateNumber);
         estimateNumber++;
         updateEstimateCounter();
@@ -581,10 +538,19 @@ async function downloadQuote() {
         closePreview();
 
     } catch (error) {
-        console.error('PDF Error:', error);
-        var errorMessage = 'Error generating PDF:\n\n' + error.message;
-        if (error.message.includes('Failed to fetch')) {
-            errorMessage += '\n\nPlease check your internet connection.';
+        console.error('Error generating PDF:', error);
+        console.error('Error stack:', error.stack);
+        var errorMessage = 'Error generating PDF\n\n';
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage += 'Network Error - Cannot connect to PDFShift API.\n\n';
+            errorMessage += 'Please check:\n';
+            errorMessage += '• Your internet connection\n';
+            errorMessage += '• Firewall or browser extensions blocking the request\n';
+            errorMessage += '• Try using a different browser\n\n';
+            errorMessage += 'Technical details are in the console (press F12)';
+        } else {
+            errorMessage += error.message;
+            errorMessage += '\n\nCheck console for more details (press F12)';
         }
         alert(errorMessage);
     } finally {
@@ -592,12 +558,5 @@ async function downloadQuote() {
             downloadBtn.textContent = originalText;
             downloadBtn.disabled = false;
         }
-    }
-}
-
-window.onclick = function(event) {
-    var modal = document.getElementById('previewModal');
-    if (event.target == modal) {
-        closePreview();
     }
 }
