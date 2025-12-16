@@ -1,55 +1,22 @@
 {
   "name": "Trader Brothers Quotation Tool",
   "short_name": "TB Quotes",
-  "description": "Professional quotation and estimate tool for Trader Brothers LTD construction and renovation projects",
-  "start_url": "./",
+  "description": "Professional quotation and estimation tool for Trader Brothers LTD",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
+  "background_color": "#ffffff",
   "theme_color": "#fbbf24",
-  "orientation": "any",
-  "scope": "./",
-  "dir": "ltr",
-  "lang": "en-GB",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "tb_logo_192x192.png",
+      "src": "https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "tb_logo_192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "tb_logo_512x512.png",
+      "src": "https://github.com/infotraderbrothers-lgtm/traderbrothers-assets-logo/blob/main/Trader%20Brothers.png?raw=true",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "tb_logo_512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "categories": ["business", "productivity", "finance"],
-  "shortcuts": [
-    {
-      "name": "New Quote",
-      "short_name": "New Quote",
-      "description": "Create a new quotation",
-      "url": "./",
-      "icons": [
-        {
-          "src": "tb_logo_96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "type": "image/png"
     }
   ]
 }
