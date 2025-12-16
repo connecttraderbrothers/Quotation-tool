@@ -121,7 +121,7 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-primary" onclick="addItem()">Add Item to Quote</button>
+            <button class="btn btn-primary" onclick="addItem()">Add Item to Quote</button>
         </div>
 
         <div class="section" id="quoteSection" style="display: none;">
@@ -152,8 +152,8 @@
         </div>
 
         <div id="generateSection" style="display: none; margin-top: 20px; text-align: center;">
-            <button type="button" class="btn btn-success" onclick="previewQuote()">Preview Quote</button>
-            <button type="button" class="btn btn-secondary" onclick="downloadQuote()">Download PDF</button>
+            <button class="btn btn-success" onclick="previewQuote()">Preview Quote</button>
+            <button class="btn btn-secondary" onclick="downloadQuote()">Download PDF</button>
         </div>
     </div>
 
@@ -164,15 +164,17 @@
                 <span class="close" onclick="closePreview()">&times;</span>
                 <h2>Quote Preview</h2>
             </div>
-            <div class="modal-body" id="previewBody">
+            <div class="modal-body">
+                <div id="estimateContainer"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" onclick="downloadQuote()">Download PDF</button>
-                <button type="button" class="btn btn-secondary" onclick="closePreview()">Close</button>
+                <button class="btn btn-success" onclick="downloadQuote()">Download PDF</button>
+                <button class="btn btn-secondary" onclick="closePreview()">Close</button>
             </div>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script src="pdf_generator.js"></script>
 </body>
 </html>
